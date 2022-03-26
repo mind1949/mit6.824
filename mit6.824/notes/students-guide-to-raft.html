@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Students&#39; Guide to Raft :: Jon Gjengset</title>
+  <meta name="description" content="For the past few months, I have been a Teaching Assistant for MIT’s
+6.824 Distributed Systems class.
+The class has traditionally had a number of labs building on the Paxos
+consensus algorithm, but this year, we decided to make the move to
+Raft. Raft was “designed to be easy to
+understand”, and our hope was that the change might make the students’
+lives easier.
+
+">
+  <meta name="author" content="Jon Gjengset <jon@thesquareplanet.com>" />
+
+  <base href="/" />
+  <meta name="flattr:id" content="e0757j" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:site" content="@jonhoo" />
+  <meta name="twitter:creator" content="@jonhoo" />
+  
+  <meta property="og:url" content="https://thesquareplanet.com/blog/students-guide-to-raft/" />
+  <meta property="og:title" content="Students' Guide to Raft" />
+  <meta property="og:description" content="For the past few months, I have been a Teaching Assistant for MIT’s
+6.824 Distributed Systems class.
+The class has traditionally had a number of labs building on the Paxos
+consensus algorithm, but this year, we decided to make the move to
+Raft. Raft was “designed to be easy to
+understand”, and our hope was that the change might make the students’
+lives easier.
+
+" />
+  
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="canonical" href="https://thesquareplanet.com/blog/students-guide-to-raft/">
+  <link rel="alternate" type="application/rss+xml" title="Jon Gjengset" href="https://thesquareplanet.com/feed.xml">
+</head>
+
+  <body id="">
+    <header class="header">
+	<nav>
+		<div class="links">
+			
+			
+			<a class="" href="/">About</a>
+			
+				
+					
+					
+					
+					<a class="" href="/blog/">Blog</a>
+					
+				
+			
+				
+			
+				
+			
+				
+					
+					
+					
+				
+			
+				
+					
+					
+					
+					<a class="" href="/research/">Research</a>
+					
+				
+			
+				
+			
+			<a class="" href="cv/">Resumé</a>
+		</div>
+		<div class="contact">
+			<a target="_blank" href="https://www.twitter.com/jonhoo">
+				<img class="icon" src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/twitter.svg" alt="Twitter" />
+			</a>
+			<a target="_blank" rel="me" href="https://fosstodon.org/@jonhoo">
+				<img class="icon" src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/mastodon.svg" alt="Mastodon" />
+			</a>
+			<a target="_blank" href="https://www.github.com/jonhoo">
+				<img class="icon" src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/github.svg" alt="GitHub" />
+			</a>
+			<a target="_blank" href="https://www.youtube.com/c/JonGjengset">
+				<img class="icon" src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/youtube.svg" alt="YouTube" />
+			</a>
+			<a target="_blank" href="https://keybase.io/jonhoo">
+				<img class="icon" src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/keybase.svg" alt="Keybase" />
+			</a>
+			<a target="_blank" href="https://www.linkedin.com/in/jonhoo">
+				<img class="icon" src="https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/linkedin.svg" alt="LinkedIn" />
+			</a>
+			<a href="mailto:jon@thesquareplanet.com">
+				<!-- https://github.com/simple-icons/simple-icons/commit/f7b08414ff7db8f10021c21e46db62bfe5983c1b -->
+				<img class="icon" src="gfx/email.svg" alt="Email" />
+			</a>
+		</div>
+	</nav>
+	
+	
+</header>
+
+    <article itemscope itemtype="http://schema.org/BlogPosting" class="blog-post">
+	<header>
+		<h3 itemprop="name headline">Students' Guide to Raft
+			<span style="display:none"
+				itemprop="author"
+				itemscope
+				itemtype="http://schema.org/Person">
+				<span itemprop="name">Jon Gjengset</span>
+			</span>
+			
+			
+			<span class="reading-time">
+				(30 min. read)
+			</span>
+			
+		</h3>
+		<span class="shared">
+			Posted on <span itemprop="datePublished">Mar 16, 2016</span>
+			
+				&mdash; shared on
+				
+					<a href="https://news.ycombinator.com/item?id=11300432">Hacker News</a>
+				
+					<a href="https://twitter.com/Jonhoo/status/710217067576827905">Twitter</a>
+				
+					<a href="https://lobste.rs/s/uep8lg/students_guide_raft">Lobsters</a>
+				
+			
+		</span>
+	</header>
+	<div itemprop="articleBody" class="hyphenate">
+		<p>For the past few months, I have been a Teaching Assistant for MIT’s
+<a href="https://pdos.csail.mit.edu/6.824/">6.824 Distributed Systems</a> class.
+The class has traditionally had a number of labs building on the Paxos
+consensus algorithm, but this year, we decided to make the move to
+<a href="https://raft.github.io/">Raft</a>. Raft was “designed to be easy to
+understand”, and our hope was that the change might make the students’
+lives easier.</p>
+
+<p>This post, and the accompanying <a href="/blog/instructors-guide-to-raft/">Instructors’ Guide to Raft</a> post, chronicles our journey
+with Raft, and will hopefully be useful to implementers of the Raft
+protocol and students trying to get a better understanding of Raft’s
+internals. If you are looking for a Paxos vs Raft comparison, or for a
+more pedagogical analysis of Raft, you should go read the Instructors’
+Guide.  The bottom of this post contains a list of questions commonly
+asked by 6.824 students, as well as answers to those questions. If you
+run into an issue that is not listed in the main content of this post,
+check out the <a href="/blog/raft-qa/">Q&amp;A</a>. The post is
+quite long, but all the points it makes are real problems that a lot of
+6.824 students (and TAs) ran into. It is a worthwhile read.</p>
+
+<h3 id="background">Background</h3>
+
+<p>Before we dive into Raft, some context may be useful. 6.824 used to have
+a set of <a href="http://nil.csail.mit.edu/6.824/2015/labs/lab-3.html">Paxos-based
+labs</a> that were
+built in <a href="https://golang.org/">Go</a>; Go was chosen both because it is
+easy to learn for students, and because is pretty well-suited for
+writing concurrent, distributed applications (goroutines come in
+particularly handy). Over the course of four labs, students build a
+fault-tolerant, sharded key-value store. The first lab had them build a
+consensus-based log library, the second added a key value store on top of
+that, and the third sharded the key space among multiple fault-tolerant
+clusters, with a fault-tolerant shard master handling configuration
+changes. We also had a fourth lab in which the students had to handle
+the failure and recovery of machines, both with and without their disks
+intact. This lab was available as a default final project for students.</p>
+
+<p>This year, we decided to rewrite all these labs using Raft. The first
+three labs were all the same, but the fourth lab was dropped as
+persistence and failure recovery is already built into Raft. This
+article will mainly discuss our experiences with the first lab, as it is
+the one most directly related to Raft, though I will also touch on
+building applications on top of Raft (as in the second lab).</p>
+
+<p>Raft, for those of you who are just getting to know it, is best
+described by the text on the protocol’s <a href="https://raft.github.io/">web
+site</a>:</p>
+
+<blockquote>
+  <p>Raft is a consensus algorithm that is designed to be easy to
+understand. It’s equivalent to Paxos in fault-tolerance and
+performance. The difference is that it’s decomposed into relatively
+independent subproblems, and it cleanly addresses all major pieces
+needed for practical systems. We hope Raft will make consensus
+available to a wider audience, and that this wider audience will be
+able to develop a variety of higher quality consensus-based systems
+than are available today.</p>
+</blockquote>
+
+<p>Visualizations like <a href="http://thesecretlivesofdata.com/raft/">this one</a>
+give a good overview of the principal components of the protocol, and
+the paper gives good intuition for why the various pieces are needed. If
+you haven’t already read the <a href="https://raft.github.io/raft.pdf">extended Raft
+paper</a>, you should go read that
+before continuing this article, as I will assume a decent familiarity
+with Raft.</p>
+
+<p>As with all distributed consensus protocols, the devil is very much in
+the details. In the steady state where there are no failures, Raft’s
+behavior is easy to understand, and can be explained in an intuitive
+manner. For example, it is simple to see from the visualizations that,
+assuming no failures, a leader will eventually be elected, and
+eventually all operations sent to the leader will be applied by the
+followers in the right order. However, when delayed messages, network
+partitions, and failed servers are introduced, each and every if, but,
+and and, become crucial. In particular, there are a number of bugs that
+we see repeated over and over again, simply due to misunderstandings or
+oversights when reading the paper. This problem is not unique to Raft,
+and is one that comes up in all complex distributed systems that provide
+correctness.</p>
+
+<h3 id="implementing-raft">Implementing Raft</h3>
+
+<p>The ultimate guide to Raft is in Figure 2 of the Raft paper. This figure
+specifies the behavior of every RPC exchanged between Raft servers,
+gives various invariants that servers must maintain, and specifies when
+certain actions should occur. We will be talking about Figure 2 <em>a lot</em>
+in the rest of this article. It needs to be followed <em>to the letter</em>.</p>
+
+<p>Figure 2 defines what every server should do, in ever state, for every
+incoming RPC, as well as when certain other things should happen (such
+as when it is safe to apply an entry in the log). At first, you might be
+tempted to treat Figure 2 as sort of an informal guide; you read it
+once, and then start coding up an implementation that follows roughly
+what it says to do. Doing this, you will quickly get up and running with
+a mostly working Raft implementation. And then the problems start.</p>
+
+<p>In fact, Figure 2 is extremely precise, and every single statement
+it makes should be treated, in specification terms, as <strong>MUST</strong>, not as
+<strong>SHOULD</strong>. For example, you might reasonably reset a peer’s election
+timer whenever you receive an <code class="language-plaintext highlighter-rouge">AppendEntries</code> or <code class="language-plaintext highlighter-rouge">RequestVote</code> RPC, as
+both indicate that some other peer either thinks it’s the leader, or is
+trying to become the leader. Intuitively, this means that we shouldn’t
+be interfering. However, if you read Figure 2 carefully, it says:</p>
+
+<blockquote>
+  <p>If election timeout elapses without receiving <code class="language-plaintext highlighter-rouge">AppendEntries</code> RPC
+<em>from current leader</em> or <em>granting</em> vote to candidate: convert to
+candidate.</p>
+</blockquote>
+
+<p>The distinction turns out to matter a lot, as the former implementation
+can result in significantly reduced liveness in certain situations.</p>
+
+<h4 id="the-importance-of-details">The importance of details</h4>
+
+<p>To make the discussion more concrete, let us consider an example that
+tripped up a number of 6.824 students. The Raft paper mentions
+<em>heartbeat RPCs</em> in a number of places. Specifically, a leader will
+occasionally (at least once per heartbeat interval) send out an
+<code class="language-plaintext highlighter-rouge">AppendEntries</code> RPC to all peers to prevent them from starting a new
+election. If the leader has no new entries to send to a particular peer,
+the <code class="language-plaintext highlighter-rouge">AppendEntries</code> RPC contains no entries, and is considered a
+heartbeat.</p>
+
+<p>Many of our students assumed that heartbeats were somehow “special”;
+that when a peer receives a heartbeat, it should treat it differently
+from a non-heartbeat <code class="language-plaintext highlighter-rouge">AppendEntries</code> RPC. In particular, many would
+simply reset their election timer when they received a heartbeat, and
+then return success, without performing any of the checks specified in
+Figure 2. This is <em>extremely dangerous</em>. By accepting the RPC, the
+follower is implicitly telling the leader that their log matches the
+leader’s log up to and including the <code class="language-plaintext highlighter-rouge">prevLogIndex</code> included in the
+<code class="language-plaintext highlighter-rouge">AppendEntries</code> arguments. Upon receiving the reply, the leader might
+then decide (incorrectly) that some entry has been replicated to a
+majority of servers, and start committing it.</p>
+
+<p>Another issue many had (often immediately after fixing the issue above),
+was that, upon receiving a heartbeat, they would truncate the follower’s
+log following <code class="language-plaintext highlighter-rouge">prevLogIndex</code>, and then append any entries included in
+the <code class="language-plaintext highlighter-rouge">AppendEntries</code> arguments. This is <em>also</em> not correct.  We can once
+again turn to Figure 2:</p>
+
+<blockquote>
+  <p><em>If</em> an existing entry conflicts with a new one (same index but
+different terms), delete the existing entry and all that follow it.</p>
+</blockquote>
+
+<p>The <em>if</em> here is crucial. If the follower has all the entries the leader
+sent, the follower <strong>MUST NOT</strong> truncate its log. Any elements
+<em>following</em> the entries sent by the leader <strong>MUST</strong> be kept. This is
+because we could be receiving an outdated <code class="language-plaintext highlighter-rouge">AppendEntries</code> RPC from the
+leader, and truncating the log would mean “taking back” entries that we
+may have already told the leader that we have in our log.</p>
+
+<h3 id="debugging-raft">Debugging Raft</h3>
+
+<p>Inevitably, the first iteration of your Raft implementation will be
+buggy. So will the second. And third. And fourth. In general, each one
+will be less buggy than the previous one, and, from experience, most of
+your bugs will be a result of not faithfully following Figure 2.</p>
+
+<p>When debugging, Raft, there are generally four main sources of bugs:
+livelocks, incorrect or incomplete RPC handlers, failure to follow The
+Rules, and term confusion. Deadlocks are also a common problem, but they
+can generally be debugged by logging all your locks and unlocks, and
+figuring out which locks you are taking, but not releasing. Let us
+consider each of these in turn:</p>
+
+<h4 id="livelocks">Livelocks</h4>
+
+<p>When your system livelocks, every node in your system is doing
+something, but collectively your nodes are in such a state that no
+progress is being made. This can happen fairly easily in Raft,
+especially if you do not follow Figure 2 religiously. One livelock
+scenario comes up especially often; no leader is being elected, or once
+a leader is elected, some other node starts an election, forcing the
+recently elected leader to abdicate immediately.</p>
+
+<p>There are many reasons why this scenario may come up, but there is a
+handful of mistakes that we have seen numerous students make:</p>
+
+<ul>
+  <li>
+    <p>Make sure you reset your election timer <em>exactly</em> when Figure 2 says
+you should. Specifically, you should <em>only</em> restart your election
+timer if a) you get an <code class="language-plaintext highlighter-rouge">AppendEntries</code> RPC from the <em>current</em> leader
+(i.e., if the term in the <code class="language-plaintext highlighter-rouge">AppendEntries</code> arguments is outdated, you
+should <em>not</em> reset your timer); b) you are starting an election; or
+c) you <em>grant</em> a vote to another peer.</p>
+
+    <p>This last case is especially important in unreliable networks where
+it is likely that followers have different logs; in those situations,
+you will often end up with only a small number of servers that a
+majority of servers are willing to vote for. If you reset the
+election timer whenever someone asks you to vote for them, this makes
+it equally likely for a server with an outdated log to step forward
+as for a server with a longer log.</p>
+
+    <p>In fact, because there are so few servers with sufficiently
+up-to-date logs, those servers are quite unlikely to be able to hold
+an election in sufficient peace to be elected. If you follow the rule
+from Figure 2, the servers with the more up-to-date logs won’t be
+interrupted by outdated servers’ elections, and so are more likely to
+complete the election and become the leader.</p>
+  </li>
+  <li>Follow Figure 2’s directions as to when you should start an election.
+In particular, note that if you are a candidate (i.e., you are
+currently running an election), but the election timer fires, you
+should start <em>another</em> election. This is important to avoid the
+system stalling due to delayed or dropped RPCs.</li>
+  <li>
+    <p>Ensure that you follow the second rule in “Rules for Servers”
+<em>before</em> handling an incoming RPC. The second rule states:</p>
+
+    <blockquote>
+      <p>If RPC request or response contains term <code class="language-plaintext highlighter-rouge">T &gt; currentTerm</code>: set
+<code class="language-plaintext highlighter-rouge">currentTerm = T</code>, convert to follower (§5.1)</p>
+    </blockquote>
+
+    <p>For example, if you have already voted in the current term, and an
+incoming <code class="language-plaintext highlighter-rouge">RequestVote</code> RPC has a higher term that you, you should
+<em>first</em> step down and adopt their term (thereby resetting
+<code class="language-plaintext highlighter-rouge">votedFor</code>), and <em>then</em> handle the RPC, which will result in you
+granting the vote!</p>
+  </li>
+</ul>
+
+<h4 id="incorrect-rpc-handlers">Incorrect RPC handlers</h4>
+
+<p>Even though Figure 2 spells out exactly what each RPC handler should do,
+some subtleties are still easy to miss. Here are a handful that we kept
+seeing over and over again, and that you should keep an eye out for in
+your implementation:</p>
+
+<ul>
+  <li>If a step says “reply false”, this means you should <em>reply
+immediately</em>, and not perform any of the subsequent steps.</li>
+  <li>If you get an <code class="language-plaintext highlighter-rouge">AppendEntries</code> RPC with a <code class="language-plaintext highlighter-rouge">prevLogIndex</code> that points
+beyond the end of your log, you should handle it the same as if you
+did have that entry but the term did not match (i.e., reply false).</li>
+  <li>Check 2 for the <code class="language-plaintext highlighter-rouge">AppendEntries</code> RPC handler should be executed <em>even
+if the leader didn’t send any entries</em>.</li>
+  <li>The <code class="language-plaintext highlighter-rouge">min</code> in the final step (#5) of <code class="language-plaintext highlighter-rouge">AppendEntries</code> is <em>necessary</em>,
+and it needs to be computed with the index of the last <em>new</em> entry.
+It is <em>not</em> sufficient to simply have the function that applies
+things from your log between <code class="language-plaintext highlighter-rouge">lastApplied</code> and <code class="language-plaintext highlighter-rouge">commitIndex</code> stop
+when it reaches the end of your log. This is because you may have
+entries in your log that differ from the leader’s log <em>after</em> the
+entries that the leader sent you (which all match the ones in your
+log). Because #3 dictates that you only truncate your log <em>if</em> you
+have conflicting entries, those won’t be removed, and if
+<code class="language-plaintext highlighter-rouge">leaderCommit</code> is beyond the entries the leader sent you, you may
+apply incorrect entries.</li>
+  <li>It is important to implement the “up-to-date log” check <em>exactly</em> as
+described in section 5.4. No cheating and just checking the length!</li>
+</ul>
+
+<h4 id="failure-to-follow-the-rules">Failure to follow The Rules</h4>
+
+<p>While the Raft paper is very explicit about how to implement each RPC
+handler, it also leaves the implementation of a number of rules and
+invariants unspecified. These are listed in the “Rules for Servers”
+block on the right hand side of Figure 2. While some of them are fairly
+self-explanatory, the are also some that require designing your
+application very carefully so that it does not violate The Rules:</p>
+
+<ul>
+  <li>If <code class="language-plaintext highlighter-rouge">commitIndex &gt; lastApplied</code> <em>at any point</em> during execution, you
+should apply a particular log entry. It is not crucial that you do it
+straight away (for example, in the <code class="language-plaintext highlighter-rouge">AppendEntries</code> RPC handler), but
+it <em>is</em> important that you ensure that this application is only done
+by one entity. Specifically, you will need to either have a dedicated
+“applier”, or to lock around these applies, so that some other
+routine doesn’t also detect that entries need to be applied and also
+tries to apply.</li>
+  <li>Make sure that you check for <code class="language-plaintext highlighter-rouge">commitIndex &gt; lastApplied</code> either
+periodically, or after <code class="language-plaintext highlighter-rouge">commitIndex</code> is updated (i.e., after
+<code class="language-plaintext highlighter-rouge">matchIndex</code> is updated). For example, if you check <code class="language-plaintext highlighter-rouge">commitIndex</code> at
+the same time as sending out <code class="language-plaintext highlighter-rouge">AppendEntries</code> to peers, you may have
+to wait until the <em>next</em> entry is appended to the log before applying
+the entry you just sent out and got acknowledged.</li>
+  <li>If a leader sends out an <code class="language-plaintext highlighter-rouge">AppendEntries</code> RPC, and it is rejected, but
+<em>not because of log inconsistency</em> (this can only happen if our term
+has passed), then you should immediately step down, and <em>not</em> update
+<code class="language-plaintext highlighter-rouge">nextIndex</code>. If you do, you could race with the resetting of
+<code class="language-plaintext highlighter-rouge">nextIndex</code> if you are re-elected immediately.</li>
+  <li>A leader is not allowed to update <code class="language-plaintext highlighter-rouge">commitIndex</code> to somewhere in a
+<em>previous</em> term (or, for that matter, a future term). Thus, as the
+rule says, you specifically need to check that <code class="language-plaintext highlighter-rouge">log[N].term ==
+currentTerm</code>. This is because Raft leaders cannot be sure an entry is
+actually committed (and will not ever be changed in the future) if
+it’s not from their current term. This is illustrated by Figure 8 in
+the paper.</li>
+</ul>
+
+<p>One common source of confusion is the difference between <code class="language-plaintext highlighter-rouge">nextIndex</code> and
+<code class="language-plaintext highlighter-rouge">matchIndex</code>. In particular, you may observe that <code class="language-plaintext highlighter-rouge">matchIndex =
+nextIndex - 1</code>, and simply not implement <code class="language-plaintext highlighter-rouge">matchIndex</code>. This is not safe.
+While <code class="language-plaintext highlighter-rouge">nextIndex</code> and <code class="language-plaintext highlighter-rouge">matchIndex</code> are generally updated at the same
+time to a similar value (specifically, <code class="language-plaintext highlighter-rouge">nextIndex = matchIndex + 1</code>),
+the two serve quite different purposes. <code class="language-plaintext highlighter-rouge">nextIndex</code> is a <em>guess</em> as to
+what prefix the leader shares with a given follower. It is generally
+quite optimistic (we share everything), and is moved backwards only on
+negative responses. For example, when a leader has just been elected,
+<code class="language-plaintext highlighter-rouge">nextIndex</code> is set to be index index at the end of the log. In a way,
+<code class="language-plaintext highlighter-rouge">nextIndex</code> is used for performance – you only need to send these
+things to this peer.</p>
+
+<p><code class="language-plaintext highlighter-rouge">matchIndex</code> is used for safety. It is a conservative <em>measurement</em> of
+what prefix of the log the leader shares with a given follower.
+<code class="language-plaintext highlighter-rouge">matchIndex</code> cannot ever be set to a value that is too high, as this may
+cause the <code class="language-plaintext highlighter-rouge">commitIndex</code> to be moved too far forward. This is why
+<code class="language-plaintext highlighter-rouge">matchIndex</code> is initialized to -1 (i.e., we agree on no prefix), and
+only updated when a follower <em>positively acknowledges</em> an
+<code class="language-plaintext highlighter-rouge">AppendEntries</code> RPC.</p>
+
+<h4 id="term-confusion">Term confusion</h4>
+
+<p>Term confusion refers to servers getting confused by RPCs that come from
+old terms. In general, this is not a problem when receiving an RPC,
+since the rules in Figure 2 say exactly what you should do when you see
+an old term. However, Figure 2 generally doesn’t discuss what you should
+do when you get old RPC <em>replies</em>. From experience, we have found that
+by far the simplest thing to do is to first record the term in the reply
+(it may be higher than your current term), and then to compare the
+current term with the term you sent in your original RPC. If the two are
+different, drop the reply and return. <em>Only</em> if the two terms are the
+same should you continue processing the reply. There may be further
+optimizations you can do here with some clever protocol reasoning, but
+this approach seems to work well. And <em>not</em> doing it leads down a long,
+winding path of blood, sweat, tears and despair.</p>
+
+<p>A related, but not identical problem is that of assuming that your state
+has not changed between when you sent the RPC, and when you received the
+reply. A good example of this is setting <code class="language-plaintext highlighter-rouge">matchIndex = nextIndex - 1</code>,
+or <code class="language-plaintext highlighter-rouge">matchIndex = len(log)</code> when you receive a response to an RPC. This
+is <em>not</em> safe, because both of those values could have been updated
+since when you sent the RPC. Instead, the correct thing to do is update
+<code class="language-plaintext highlighter-rouge">matchIndex</code> to be <code class="language-plaintext highlighter-rouge">prevLogIndex + len(entries[])</code> from the arguments
+you sent in the RPC originally.</p>
+
+<h4 id="an-aside-on-optimizations">An aside on optimizations</h4>
+
+<p>The Raft paper includes a couple of optional features of interest. In
+6.824, we require the students to implement two of them: log compaction
+(section 7) and accelerated log backtracking (top left hand side of page
+8). The former is necessary to avoid the log growing without bound, and
+the latter is useful for bringing stale followers up to date quickly.</p>
+
+<p>These features are not a part of “core Raft”, and so do not receive as
+much attention in the paper as the main consensus protocol. Log
+compaction is covered fairly thoroughly (in Figure 13), but leaves out
+some design details that you might miss if you read it too casually:</p>
+
+<ul>
+  <li>When snapshotting application state, you need to make sure that the
+application state corresponds to the state following some known index
+in the Raft log. This means that the application either needs to
+communicate to Raft what index the snapshot corresponds to, or that
+Raft needs to delay applying additional log entries until the
+snapshot has been completed.</li>
+  <li>
+    <p>The text does not discuss the recovery protocol for when a server
+crashes and comes back up now that snapshots are involved. In
+particular, if Raft state and snapshots are committed separately,
+a server could crash between persisting a snapshot and persisting the
+updated Raft state. This is a problem, because step 7 in Figure 13
+dictates that the Raft log covered by the snapshot <em>must be
+discarded</em>.</p>
+
+    <p>If, when the server comes back up, it reads the updated snapshot, but
+the outdated log, it may end up applying some log entries <em>that are
+already contained within the snapshot</em>. This happens since the
+<code class="language-plaintext highlighter-rouge">commitIndex</code> and <code class="language-plaintext highlighter-rouge">lastApplied</code> are not persisted, and so Raft
+doesn’t know that those log entries have already been applied. The
+fix for this is to introduce a piece of persistent state to Raft that
+records what “real” index the first entry in Raft’s persisted log
+corresponds to. This can then be compared to the loaded snapshot’s
+<code class="language-plaintext highlighter-rouge">lastIncludedIndex</code> to determine what elements at the head of the log
+to discard.</p>
+  </li>
+</ul>
+
+<p>The accelerated log backtracking optimization is very underspecified,
+probably because the authors do not see it as being necessary for most
+deployments. It is not clear from the text exactly how the conflicting
+index and term sent back from the client should be used by the leader to
+determine what <code class="language-plaintext highlighter-rouge">nextIndex</code> to use. We believe the protocol the authors
+<em>probably</em> want you to follow is:</p>
+
+<ul>
+  <li>If a follower does not have <code class="language-plaintext highlighter-rouge">prevLogIndex</code> in its log, it should
+return with <code class="language-plaintext highlighter-rouge">conflictIndex = len(log)</code> and <code class="language-plaintext highlighter-rouge">conflictTerm = None</code>.</li>
+  <li>If a follower does have <code class="language-plaintext highlighter-rouge">prevLogIndex</code> in its log, but the term does
+not match, it should return <code class="language-plaintext highlighter-rouge">conflictTerm = log[prevLogIndex].Term</code>,
+and then search its log for the first index whose entry has term
+equal to <code class="language-plaintext highlighter-rouge">conflictTerm</code>.</li>
+  <li>Upon receiving a conflict response, the leader should first search
+its log for <code class="language-plaintext highlighter-rouge">conflictTerm</code>. If it finds an entry in its log with that
+term, it should set <code class="language-plaintext highlighter-rouge">nextIndex</code> to be the one beyond the index of the
+<em>last</em> entry in that term in its log.</li>
+  <li>If it does not find an entry with that term, it should set <code class="language-plaintext highlighter-rouge">nextIndex
+= conflictIndex</code>.</li>
+</ul>
+
+<p>A half-way solution is to just use <code class="language-plaintext highlighter-rouge">conflictIndex</code> (and ignore
+<code class="language-plaintext highlighter-rouge">conflictTerm</code>), which simplifies the implementation, but then the
+leader will sometimes end up sending more log entries to the follower
+than is strictly necessary to bring them up to date.</p>
+
+<h3 id="applications-on-top-of-raft">Applications on top of Raft</h3>
+
+<p>When building a service on top of Raft (such as the key/value store in
+the <a href="https://pdos.csail.mit.edu/6.824/labs/lab-kvraft.html">second 6.824 Raft
+lab</a>, the
+interaction between the service and the Raft log can be tricky to get
+right. This section details some aspects of the development process that
+you may find useful when building your application.</p>
+
+<h4 id="applying-client-operations">Applying client operations</h4>
+
+<p>You may be confused about how you would even implement an application in
+terms of a replicated log. You might start off by having your service,
+whenever it receives a client request, send that request to the leader,
+wait for Raft to apply something, do the operation the client asked for,
+and then return to the client. While this would be fine in a
+single-client system, it does not work for concurrent clients.</p>
+
+<p>Instead, the service should be constructed as a <em>state machine</em> where
+client operations transition the machine from one state to another. You
+should have a loop somewhere that takes one client operation at the time
+(in the same order on all servers – this is where Raft comes in), and
+applies each one to the state machine in order. This loop should be the
+<em>only</em> part of your code that touches the application state (the
+key/value mapping in 6.824). This means that your client-facing RPC
+methods should simply submit the client’s operation to Raft, and then
+<em>wait</em> for that operation to be applied by this “applier loop”. Only
+when the client’s command comes up should it be executed, and any return
+values read out. Note that <em>this includes read requests</em>!</p>
+
+<p>This brings up another question: how do you know when a client operation
+has completed? In the case of no failures, this is simple – you just
+wait for the thing you put into the log to come back out (i.e., be
+passed to <code class="language-plaintext highlighter-rouge">apply()</code>). When that happens, you return the result to the
+client. However, what happens if there are failures? For example, you
+may have been the leader when the client initially contacted you, but
+someone else has since been elected, and the client request you put in
+the log has been discarded. Clearly you need to have the client try
+again, but how do you know when to tell them about the error?</p>
+
+<p>One simple way to solve this problem is to record where in the Raft log
+the client’s operation appears when you insert it. Once the operation at
+that index is sent to <code class="language-plaintext highlighter-rouge">apply()</code>, you can tell whether or not the
+client’s operation succeeded based on whether the operation that came up
+for that index is in fact the one you put there. If it isn’t, a failure
+has happened and an error can be returned to the client.</p>
+
+<h4 id="duplicate-detection">Duplicate detection</h4>
+
+<p>As soon as you have clients retry operations in the face of errors, you
+need some kind of duplicate detection scheme – if a client sends an
+<code class="language-plaintext highlighter-rouge">APPEND</code> to your server, doesn’t hear back, and re-sends it to the next
+server, your <code class="language-plaintext highlighter-rouge">apply()</code> function needs to ensure that the <code class="language-plaintext highlighter-rouge">APPEND</code> isn’t
+executed twice. To do so, you need some kind of unique identifier for
+each client request, so that you can recognize if you have seen, and
+more importantly, applied, a particular operation in the past.
+Furthermore, this state needs to be a part of your state machine so that
+all your Raft servers eliminate the <em>same</em> duplicates.</p>
+
+<p>There are many ways of assigning such identifiers. One simple and fairly
+efficient one is to give each client a unique identifier, and then have
+them tag each request with a monotonically increasing sequence number.
+If a client re-sends a request, it re-uses the same sequence number.
+Your server keeps track of the latest sequence number it has seen for
+each client, and simply ignores any operation that it has already seen.</p>
+
+<h4 id="hairy-corner-cases">Hairy corner-cases</h4>
+
+<p>If your implementation follows the general outline given above, there
+are at least two subtle issues you are likely to run into that may be
+hard to identify without some serious debugging. To save you some time,
+here they are:</p>
+
+<p><strong>Re-appearing indices</strong>:
+Say that your Raft library has some method <code class="language-plaintext highlighter-rouge">Start()</code> that takes a
+command, and return the index at which that command was placed in the
+log (so that you know when to return to the client, as discussed above).
+You might assume that you will never see <code class="language-plaintext highlighter-rouge">Start()</code> return the same index
+twice, or at the very least, that if you see the same index again, the
+command that first returned that index must have failed. It turns out
+that neither of these things are true, even if no servers crash.</p>
+
+<p>Consider the following scenario with five servers, S1 through S5.
+Initially, S1 is the leader, and its log is empty.</p>
+
+<ol>
+  <li>Two client operations (C1 and C2) arrive on S1</li>
+  <li><code class="language-plaintext highlighter-rouge">Start()</code> return 1 for C1, and 2 for C2.</li>
+  <li>S1 sends out an <code class="language-plaintext highlighter-rouge">AppendEntries</code> to S2 containing C1 and C2, but all
+its other messages are lost.</li>
+  <li>S3 steps forward as a candidate.</li>
+  <li>S1 and S2 won’t vote for S3, but S3, S4, and S5 all will, so S3
+becomes the leader.</li>
+  <li>Another client request, C3 comes in to S3.</li>
+  <li>S3 calls <code class="language-plaintext highlighter-rouge">Start()</code> (which returns 1)</li>
+  <li>S3 sends an <code class="language-plaintext highlighter-rouge">AppendEntries</code> to S1, who discards C1 and C2 from its
+log, and adds C3.</li>
+  <li>S3 fails before sending <code class="language-plaintext highlighter-rouge">AppendEntries</code> to any other servers.</li>
+  <li>S1 steps forward, and because its log is up-to-date, it is elected
+leader.</li>
+  <li>Another client request, C4, arrives at S1</li>
+  <li>S1 calls <code class="language-plaintext highlighter-rouge">Start()</code>, which returns 2 (which was also returned for
+<code class="language-plaintext highlighter-rouge">Start(C2)</code>.</li>
+  <li>All of S1’s <code class="language-plaintext highlighter-rouge">AppendEntries</code> are dropped, and S2 steps forward.</li>
+  <li>S1 and S3 won’t vote for S2, but S2, S4, and S5 all will, so S2
+becomes leader.</li>
+  <li>A client request C5 comes in to S2</li>
+  <li>S2 calls <code class="language-plaintext highlighter-rouge">Start()</code>, which returns 3.</li>
+  <li>S2 successfully sends <code class="language-plaintext highlighter-rouge">AppendEntries</code> to all the servers, which S2
+reports back to the servers by including an updated <code class="language-plaintext highlighter-rouge">leaderCommit =
+3</code> in the next heartbeat.</li>
+</ol>
+
+<p>Since S2’s log is <code class="language-plaintext highlighter-rouge">[C1 C2 C5]</code>, this means that the entry that committed
+(and was applied at all servers, including S1) at index 2 is C2. This
+despite the fact that C4 was the last client operation to have returned
+index 2 at S1.</p>
+
+<p><strong>The four-way deadlock</strong>:
+All credit for finding this goes to <a href="http://stebalien.com/">Steven
+Allen</a>, another 6.824 TA. He found the following
+nasty four-way deadlock that you can easily get into when building
+applications on top of Raft.</p>
+
+<p>Your Raft code, however it is structured, likely has a <code class="language-plaintext highlighter-rouge">Start()</code>-like
+function that allows the application to add new commands to the Raft
+log. It also likely has a loop that, when <code class="language-plaintext highlighter-rouge">commitIndex</code> is updated,
+calls <code class="language-plaintext highlighter-rouge">apply()</code> on the application for every element in the log between
+<code class="language-plaintext highlighter-rouge">lastApplied</code> and <code class="language-plaintext highlighter-rouge">commitIndex</code>. These routines probably both take some
+lock <code class="language-plaintext highlighter-rouge">a</code>. In your Raft-based application, you probably call Raft’s
+<code class="language-plaintext highlighter-rouge">Start()</code> function somewhere in your RPC handlers, and you have some
+code somewhere else that is informed whenever Raft applies a new log
+entry. Since these two need to communicate (i.e., the RPC method needs
+to know when the operation it put into the log completes), they both
+probably take some lock <code class="language-plaintext highlighter-rouge">b</code>.</p>
+
+<p>In Go, these four code segments probably look something like this:</p>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">func</span> <span class="p">(</span><span class="n">a</span> <span class="o">*</span><span class="n">App</span><span class="p">)</span> <span class="n">RPC</span><span class="p">(</span><span class="n">args</span> <span class="k">interface</span><span class="p">{},</span> <span class="n">reply</span> <span class="k">interface</span><span class="p">{})</span> <span class="p">{</span>
+    <span class="c">// ...</span>
+    <span class="n">a</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+    <span class="n">i</span> <span class="o">:=</span> <span class="n">a</span><span class="o">.</span><span class="n">raft</span><span class="o">.</span><span class="n">Start</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+    <span class="c">// update some data structure so that apply knows to poke us later</span>
+    <span class="n">a</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">Unlock</span><span class="p">()</span>
+    <span class="c">// wait for apply to poke us</span>
+    <span class="k">return</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">func</span> <span class="p">(</span><span class="n">r</span> <span class="o">*</span><span class="n">Raft</span><span class="p">)</span> <span class="n">Start</span><span class="p">(</span><span class="n">cmd</span> <span class="k">interface</span><span class="p">{})</span> <span class="kt">int</span> <span class="p">{</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+    <span class="c">// do things to start agreement on this new command</span>
+    <span class="c">// store index in the log where cmd was placed</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">Unlock</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">index</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">func</span> <span class="p">(</span><span class="n">a</span> <span class="o">*</span><span class="n">App</span><span class="p">)</span> <span class="n">apply</span><span class="p">(</span><span class="n">index</span> <span class="kt">int</span><span class="p">,</span> <span class="n">cmd</span> <span class="k">interface</span><span class="p">{})</span> <span class="p">{</span>
+    <span class="n">a</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+    <span class="k">switch</span> <span class="n">cmd</span> <span class="o">:=</span> <span class="n">cmd</span><span class="o">.</span><span class="p">(</span><span class="k">type</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">case</span> <span class="n">GetArgs</span><span class="o">:</span>
+        <span class="c">// do the get</span>
+	<span class="c">// see who was listening for this index</span>
+	<span class="c">// poke them all with the result of the operation</span>
+    <span class="c">// ...</span>
+    <span class="p">}</span>
+    <span class="n">a</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">Unlock</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<div class="language-go highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">func</span> <span class="p">(</span><span class="n">r</span> <span class="o">*</span><span class="n">Raft</span><span class="p">)</span> <span class="n">AppendEntries</span><span class="p">(</span><span class="o">...</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c">// ...</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+    <span class="c">// ...</span>
+    <span class="k">for</span> <span class="n">r</span><span class="o">.</span><span class="n">lastApplied</span> <span class="o">&lt;</span> <span class="n">r</span><span class="o">.</span><span class="n">commitIndex</span> <span class="p">{</span>
+      <span class="n">r</span><span class="o">.</span><span class="n">lastApplied</span><span class="o">++</span>
+      <span class="n">r</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">lastApplied</span><span class="p">,</span> <span class="n">r</span><span class="o">.</span><span class="n">log</span><span class="p">[</span><span class="n">r</span><span class="o">.</span><span class="n">lastApplied</span><span class="p">])</span>
+    <span class="p">}</span>
+    <span class="c">// ...</span>
+    <span class="n">r</span><span class="o">.</span><span class="n">mutex</span><span class="o">.</span><span class="n">Unlock</span><span class="p">()</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Consider now if the system is in the following state:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">App.RPC</code> has just taken <code class="language-plaintext highlighter-rouge">a.mutex</code> and called <code class="language-plaintext highlighter-rouge">Raft.Start</code></li>
+  <li><code class="language-plaintext highlighter-rouge">Raft.Start</code> is waiting for <code class="language-plaintext highlighter-rouge">r.mutex</code></li>
+  <li><code class="language-plaintext highlighter-rouge">Raft.AppendEntries</code> is holding <code class="language-plaintext highlighter-rouge">r.mutex</code>, and has just called
+<code class="language-plaintext highlighter-rouge">App.apply</code></li>
+</ul>
+
+<p>We now have a deadlock, because:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">Raft.AppendEntries</code> won’t release the lock until <code class="language-plaintext highlighter-rouge">App.apply</code> returns.</li>
+  <li><code class="language-plaintext highlighter-rouge">App.apply</code> can’t return until it gets <code class="language-plaintext highlighter-rouge">a.mutex</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">a.mutex</code> won’t be released until <code class="language-plaintext highlighter-rouge">App.RPC</code> returns.</li>
+  <li><code class="language-plaintext highlighter-rouge">App.RPC</code> won’t return until <code class="language-plaintext highlighter-rouge">Raft.Start</code> returns.</li>
+  <li><code class="language-plaintext highlighter-rouge">Raft.Start</code> can’t return until it gets <code class="language-plaintext highlighter-rouge">r.mutex</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">Raft.Start</code> has to wait for <code class="language-plaintext highlighter-rouge">Raft.AppendEntries</code>.</li>
+</ul>
+
+<p>There are a couple of ways you can get around this problem. The easiest
+one is to take <code class="language-plaintext highlighter-rouge">a.mutex</code> <em>after</em> calling <code class="language-plaintext highlighter-rouge">a.raft.Start</code> in <code class="language-plaintext highlighter-rouge">App.RPC</code>.
+However, this means that <code class="language-plaintext highlighter-rouge">App.apply</code> may be called for the operation
+that <code class="language-plaintext highlighter-rouge">App.RPC</code> just called <code class="language-plaintext highlighter-rouge">Raft.Start</code> on <em>before</em> <code class="language-plaintext highlighter-rouge">App.RPC</code> has a
+chance to record the fact that it wishes to be notified.
+Another scheme that may yield a neater design is to have a single,
+dedicated thread calling <code class="language-plaintext highlighter-rouge">r.app.apply</code> from <code class="language-plaintext highlighter-rouge">Raft</code>. This thread could be
+notified every time <code class="language-plaintext highlighter-rouge">commitIndex</code> is updated, and would then not need to
+hold a lock in order to apply, breaking the deadlock.</p>
+
+	</div>
+	<script>
+		document.querySelectorAll('.blog-post > div').forEach(function(bp) {
+			bp.querySelectorAll('h1,h2,h3,h4').forEach(function(h) {
+				if (h.id && !h.querySelector('a')) {
+					var text = h.textContent;
+					var a = document.createElement('a');
+					var url = new URL(location.href);
+					url.hash = h.id;
+					a.href = url.href;
+					a.textContent = text;
+					h.innerHTML = '';
+					h.appendChild(a);
+					h.classList.add('anchor');
+				}
+			})
+		})
+	</script>
+	<footer>
+		<a class="revision" href="https://github.com/jonhoo/thesquareplanet.com/commits/master/_posts/2016-03-16-students-guide-to-raft.md">( revision history )</a>
+	</footer>
+</article>
+
+    <footer class="footer">
+	
+	<p>
+		<a href="jongjengset.ssh.pub">
+			<abbr title="SHA256:VBQE52wNvA6sLOHZkKvuWKvfKd4gVBNsvKCs1ea9M1Q">VBQE52&hellip;</abbr>
+			(SSH)
+		</a>
+		&ndash;
+		<a href="jongjengset.pgp.asc">
+			<abbr title="BC86 1150 38EA 36D5 2CA1 FFF1 B428 8F5A 4A34 220B">0x4A34220B</abbr>
+			(PGP)
+		</a>
+		<br />
+		<a href="bitcoin:3LQsCAyP1dS7mCwAkMgZtxbCRuWHAjrcEs">
+			3LQsCAyP1dS7mCwAkMgZtxbCRuWHAjrcEs (BTC)
+		</a>
+	</p>
+	<p>Subscribe to blog <a href="feed.xml">via RSS</a></p>
+	<p>Icons by <a href="https://simpleicons.org/">Simple Icons</a></p>
+</footer>
+
+<div class="hidden" itemscope itemtype="http://schema.org/Person">
+	<span itemprop="gender">Male</span>
+	<span itemprop="email">jon@thesquareplanet.com</span>
+	<span itemprop="givenName">Jon</span>
+	<span itemprop="familyName">Gjengset</span>
+	<span itemprop="name">Jon Ferdinand Ronge Gjengset</span>
+	<span itemprop="additionalName">Ferdinand Ronge</span>
+	<span itemprop="birthDate">1989-12-07</span>
+	<span itemprop="jobTitle">Software Engineer</span>
+	<span itemprop="nationality">NO</span>
+	<span itemprop="telephone">+16173904180</span>
+	<div itemprop="homeLocation" itemscope itemtype="http://schema.org/Place">
+		<div itemprop="address" itemscope itemtype="http://schema.org/PostalAddress">
+			<span itemprop="streetAddress">250 Elm Street</span>
+			<span itemprop="addressLocality">Cambridge</span>,
+			<span itemprop="addressRegion">MA</span>,
+			<span itemprop="addressCountry">US</span>,
+			<span itemprop="postalCode">02139</span>
+		</div>
+	</div>
+	<div itemprop="alumniOf" itemscope itemtype="http://schema.org/EducationalOrganization">
+		<a itemprop="url" href="https://mit.edu">
+			<span title="Massachusetts Institute of Technology" itemprop="name">MIT</span>
+		</a>
+	</div>
+	<div itemprop="alumniOf" itemscope itemtype="http://schema.org/EducationalOrganization">
+		<a itemprop="url" href="https://www.ucl.ac.uk">
+			<span title="University College London" itemprop="name">UCL</span>
+		</a>
+	</div>
+	<div itemprop="alumniOf" itemscope itemtype="http://schema.org/EducationalOrganization">
+		<a itemprop="url" href="https://www.bond.edu.au">
+			<span itemprop="name">Bond University</span>
+		</a>
+	</div>
+	<a href="https://thesquareplanet.com" itemprop="url">Portfolio</a>
+	<a href="https://thesquareplanet.com/blog" itemprop="url">Blog</a>
+</div>
+<script src="js/hyphenate.js" async></script>
+
+  </body>
+</html>
