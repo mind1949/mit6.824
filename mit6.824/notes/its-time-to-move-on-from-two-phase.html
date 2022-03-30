@@ -1,0 +1,1989 @@
+<!DOCTYPE html>
+<html class='v2' dir='ltr' lang='en'>
+<head>
+<link href='https://www.blogger.com/static/v1/widgets/1529571102-css_bundle_v2.css' rel='stylesheet' type='text/css'/>
+<meta content='width=1100' name='viewport'/>
+<meta content='text/html; charset=UTF-8' http-equiv='Content-Type'/>
+<meta content='blogger' name='generator'/>
+<link href='http://dbmsmusings.blogspot.com/favicon.ico' rel='icon' type='image/x-icon'/>
+<link href='http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html' rel='canonical'/>
+<link rel="alternate" type="application/atom+xml" title="DBMS Musings - Atom" href="http://dbmsmusings.blogspot.com/feeds/posts/default" />
+<link rel="alternate" type="application/rss+xml" title="DBMS Musings - RSS" href="http://dbmsmusings.blogspot.com/feeds/posts/default?alt=rss" />
+<link rel="service.post" type="application/atom+xml" title="DBMS Musings - Atom" href="https://www.blogger.com/feeds/8899645800948009496/posts/default" />
+
+<link rel="alternate" type="application/atom+xml" title="DBMS Musings - Atom" href="http://dbmsmusings.blogspot.com/feeds/6159068451380532642/comments/default" />
+<!--[if IE]><script type="text/javascript" src="https://www.blogger.com/static/v1/jsbin/2287435483-ieretrofit.js"></script>
+<![endif]-->
+<link href='https://lh6.googleusercontent.com/F7giuNAtrYsZz1ZYZPOuqXnnYYfUTiXq-IU-wKkiRbnKqhnEehTA1cIwdDTIQ5MylDjbsKhbjYLyZJkt-HFQQ50BaMtS2Vel_vr0II5vbjl2K6UX3tjQTnOb75ICgeo7IQDmIyeG' rel='image_src'/>
+<meta content='http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html' property='og:url'/>
+<meta content='It’s Time to Move on from Two Phase Commit' property='og:title'/>
+<meta content=' The two-phase commit protocol (2PC) has been used in enterprise software systems for over three decades . It has been an an incredibly impa...' property='og:description'/>
+<meta content='https://lh6.googleusercontent.com/F7giuNAtrYsZz1ZYZPOuqXnnYYfUTiXq-IU-wKkiRbnKqhnEehTA1cIwdDTIQ5MylDjbsKhbjYLyZJkt-HFQQ50BaMtS2Vel_vr0II5vbjl2K6UX3tjQTnOb75ICgeo7IQDmIyeG=w1200-h630-p-k-no-nu' property='og:image'/>
+<!--[if IE]> <script> (function() { var html5 = ("abbr,article,aside,audio,canvas,datalist,details," + "figure,footer,header,hgroup,mark,menu,meter,nav,output," + "progress,section,time,video").split(','); for (var i = 0; i < html5.length; i++) { document.createElement(html5[i]); } try { document.execCommand('BackgroundImageCache', false, true); } catch(e) {} })(); </script> <![endif]-->
+<title>DBMS Musings: It&#8217;s Time to Move on from Two Phase Commit</title>
+<style id='page-skin-1' type='text/css'><!--
+/*
+-----------------------------------------------
+Blogger Template Style
+Name:     Ethereal
+Designer: Jason Morrow
+URL:      jasonmorrow.etsy.com
+----------------------------------------------- */
+/* Content
+----------------------------------------------- */
+body {
+font: normal normal 13px Arial, Tahoma, Helvetica, FreeSans, sans-serif;
+color: #666666;
+background: #fb5e53 url(https://resources.blogblog.com/blogblog/data/1kt/ethereal/birds-2toned-bg.png) repeat-x scroll top center;
+}
+html body .content-outer {
+min-width: 0;
+max-width: 100%;
+width: 100%;
+}
+a:link {
+text-decoration: none;
+color: #2198a6;
+}
+a:visited {
+text-decoration: none;
+color: #4d469c;
+}
+a:hover {
+text-decoration: underline;
+color: #2198a6;
+}
+.main-inner {
+padding-top: 15px;
+}
+.body-fauxcolumn-outer {
+background: transparent none repeat-x scroll top center;
+}
+.content-fauxcolumns .fauxcolumn-inner {
+background: #ffffff url(https://resources.blogblog.com/blogblog/data/1kt/ethereal/bird-2toned-blue-fade.png) repeat-x scroll top left;
+border-left: 1px solid #fb5e53;
+border-right: 1px solid #fb5e53;
+}
+/* Flexible Background
+----------------------------------------------- */
+.content-fauxcolumn-outer .fauxborder-left {
+width: 100%;
+padding-left: 300px;
+margin-left: -300px;
+background-color: transparent;
+background-image: url(//themes.googleusercontent.com/image?id=0BwVBOzw_-hbMNjViMzQ0ZDEtMWU1NS00ZTBkLWFjY2EtZjM5YmU4OTA2MjBm);
+background-repeat: no-repeat;
+background-position: left top;
+}
+.content-fauxcolumn-outer .fauxborder-right {
+margin-right: -299px;
+width: 299px;
+background-color: transparent;
+background-image: url(//themes.googleusercontent.com/image?id=0BwVBOzw_-hbMNjViMzQ0ZDEtMWU1NS00ZTBkLWFjY2EtZjM5YmU4OTA2MjBm);
+background-repeat: no-repeat;
+background-position: right top;
+}
+/* Columns
+----------------------------------------------- */
+.content-inner {
+padding: 0;
+}
+/* Header
+----------------------------------------------- */
+.header-inner {
+padding: 27px 0 3px;
+}
+.header-inner .section {
+margin: 0 35px;
+}
+.Header h1 {
+font: normal normal 60px Times, 'Times New Roman', FreeSerif, serif;
+color: #ff8b8b;
+}
+.Header h1 a {
+color: #ff8b8b;
+}
+.Header .description {
+font-size: 115%;
+color: #666666;
+}
+.header-inner .Header .titlewrapper,
+.header-inner .Header .descriptionwrapper {
+padding-left: 0;
+padding-right: 0;
+margin-bottom: 0;
+}
+/* Tabs
+----------------------------------------------- */
+.tabs-outer {
+position: relative;
+background: transparent;
+}
+.tabs-cap-top, .tabs-cap-bottom {
+position: absolute;
+width: 100%;
+}
+.tabs-cap-bottom {
+bottom: 0;
+}
+.tabs-inner {
+padding: 0;
+}
+.tabs-inner .section {
+margin: 0 35px;
+}
+*+html body .tabs-inner .widget li {
+padding: 1px;
+}
+.PageList {
+border-bottom: 1px solid #fb5e53;
+}
+.tabs-inner .widget li.selected a,
+.tabs-inner .widget li a:hover {
+position: relative;
+-moz-border-radius-topleft: 5px;
+-moz-border-radius-topright: 5px;
+-webkit-border-top-left-radius: 5px;
+-webkit-border-top-right-radius: 5px;
+-goog-ms-border-top-left-radius: 5px;
+-goog-ms-border-top-right-radius: 5px;
+border-top-left-radius: 5px;
+border-top-right-radius: 5px;
+background: #ffa183 none ;
+color: #ffffff;
+}
+.tabs-inner .widget li a {
+display: inline-block;
+margin: 0;
+margin-right: 1px;
+padding: .65em 1.5em;
+font: normal normal 12px Arial, Tahoma, Helvetica, FreeSans, sans-serif;
+color: #666666;
+background-color: #ffdfc7;
+-moz-border-radius-topleft: 5px;
+-moz-border-radius-topright: 5px;
+-webkit-border-top-left-radius: 5px;
+-webkit-border-top-right-radius: 5px;
+-goog-ms-border-top-left-radius: 5px;
+-goog-ms-border-top-right-radius: 5px;
+border-top-left-radius: 5px;
+border-top-right-radius: 5px;
+}
+/* Headings
+----------------------------------------------- */
+h2 {
+font: normal bold 12px Arial, Tahoma, Helvetica, FreeSans, sans-serif;
+color: #666666;
+}
+/* Widgets
+----------------------------------------------- */
+.main-inner .column-left-inner {
+padding: 0 0 0 20px;
+}
+.main-inner .column-left-inner .section {
+margin-right: 0;
+}
+.main-inner .column-right-inner {
+padding: 0 20px 0 0;
+}
+.main-inner .column-right-inner .section {
+margin-left: 0;
+}
+.main-inner .section {
+padding: 0;
+}
+.main-inner .widget {
+padding: 0 0 15px;
+margin: 20px 0;
+border-bottom: 1px solid #dbdbdb;
+}
+.main-inner .widget h2 {
+margin: 0;
+padding: .6em 0 .5em;
+}
+.footer-inner .widget h2 {
+padding: 0 0 .4em;
+}
+.main-inner .widget h2 + div, .footer-inner .widget h2 + div {
+padding-top: 15px;
+}
+.main-inner .widget .widget-content {
+margin: 0;
+padding: 15px 0 0;
+}
+.main-inner .widget ul, .main-inner .widget #ArchiveList ul.flat {
+margin: -15px -15px -15px;
+padding: 0;
+list-style: none;
+}
+.main-inner .sidebar .widget h2 {
+border-bottom: 1px solid #dbdbdb;
+}
+.main-inner .widget #ArchiveList {
+margin: -15px 0 0;
+}
+.main-inner .widget ul li, .main-inner .widget #ArchiveList ul.flat li {
+padding: .5em 15px;
+text-indent: 0;
+}
+.main-inner .widget #ArchiveList ul li {
+padding-top: .25em;
+padding-bottom: .25em;
+}
+.main-inner .widget ul li:first-child, .main-inner .widget #ArchiveList ul.flat li:first-child {
+border-top: none;
+}
+.main-inner .widget ul li:last-child, .main-inner .widget #ArchiveList ul.flat li:last-child {
+border-bottom: none;
+}
+.main-inner .widget .post-body ul {
+padding: 0 2.5em;
+margin: .5em 0;
+list-style: disc;
+}
+.main-inner .widget .post-body ul li {
+padding: 0.25em 0;
+margin-bottom: .25em;
+color: #666666;
+border: none;
+}
+.footer-inner .widget ul {
+padding: 0;
+list-style: none;
+}
+.widget .zippy {
+color: #cccccc;
+}
+/* Posts
+----------------------------------------------- */
+.main.section {
+margin: 0 20px;
+}
+body .main-inner .Blog {
+padding: 0;
+background-color: transparent;
+border: none;
+}
+.main-inner .widget h2.date-header {
+border-bottom: 1px solid #dbdbdb;
+}
+.date-outer {
+position: relative;
+margin: 15px 0 20px;
+}
+.date-outer:first-child {
+margin-top: 0;
+}
+.date-posts {
+clear: both;
+}
+.post-outer, .inline-ad {
+border-bottom: 1px solid #dbdbdb;
+padding: 30px 0;
+}
+.post-outer {
+padding-bottom: 10px;
+}
+.post-outer:first-child {
+padding-top: 0;
+border-top: none;
+}
+.post-outer:last-child, .inline-ad:last-child {
+border-bottom: none;
+}
+.post-body img {
+padding: 8px;
+}
+h3.post-title, h4 {
+font: normal normal 24px Times, Times New Roman, serif;
+color: #2198a6;
+}
+h3.post-title a {
+font: normal normal 24px Times, Times New Roman, serif;
+color: #2198a6;
+text-decoration: none;
+}
+h3.post-title a:hover {
+color: #2198a6;
+text-decoration: underline;
+}
+.post-header {
+margin: 0 0 1.5em;
+}
+.post-body {
+line-height: 1.4;
+}
+.post-footer {
+margin: 1.5em 0 0;
+}
+#blog-pager {
+padding: 15px;
+}
+.blog-feeds, .post-feeds {
+margin: 1em 0;
+text-align: center;
+}
+.post-outer .comments {
+margin-top: 2em;
+}
+/* Comments
+----------------------------------------------- */
+.comments .comments-content .icon.blog-author {
+background-repeat: no-repeat;
+background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEgAACxIB0t1+/AAAAAd0SU1FB9sLFwMeCjjhcOMAAAD+SURBVDjLtZSvTgNBEIe/WRRnm3U8RC1neQdsm1zSBIU9VVF1FkUguQQsD9ITmD7ECZIJSE4OZo9stoVjC/zc7ky+zH9hXwVwDpTAWWLrgS3QAe8AZgaAJI5zYAmc8r0G4AHYHQKVwII8PZrZFsBFkeRCABYiMh9BRUhnSkPTNCtVXYXURi1FpBDgArj8QU1eVXUzfnjv7yP7kwu1mYrkWlU33vs1QNu2qU8pwN0UpKoqokjWwCztrMuBhEhmh8bD5UDqur75asbcX0BGUB9/HAMB+r32hznJgXy2v0sGLBcyAJ1EK3LFcbo1s91JeLwAbwGYu7TP/3ZGfnXYPgAVNngtqatUNgAAAABJRU5ErkJggg==);
+}
+.comments .comments-content .loadmore a {
+background: #ffffff url(https://resources.blogblog.com/blogblog/data/1kt/ethereal/bird-2toned-blue-fade.png) repeat-x scroll top left;
+}
+.comments .comments-content .loadmore a {
+border-top: 1px solid #dbdbdb;
+border-bottom: 1px solid #dbdbdb;
+}
+.comments .comment-thread.inline-thread {
+background: #ffffff url(https://resources.blogblog.com/blogblog/data/1kt/ethereal/bird-2toned-blue-fade.png) repeat-x scroll top left;
+}
+.comments .continue {
+border-top: 2px solid #dbdbdb;
+}
+/* Footer
+----------------------------------------------- */
+.footer-inner {
+padding: 30px 0;
+overflow: hidden;
+}
+/* Mobile
+----------------------------------------------- */
+body.mobile  {
+background-size: auto
+}
+.mobile .body-fauxcolumn-outer {
+background: ;
+}
+.mobile .content-fauxcolumns .fauxcolumn-inner {
+opacity: 0.75;
+}
+.mobile .content-fauxcolumn-outer .fauxborder-right {
+margin-right: 0;
+}
+.mobile-link-button {
+background-color: #ffa183;
+}
+.mobile-link-button a:link, .mobile-link-button a:visited {
+color: #ffffff;
+}
+.mobile-index-contents {
+color: #444444;
+}
+.mobile .body-fauxcolumn-outer {
+background-size: 100% auto;
+}
+.mobile .mobile-date-outer {
+border-bottom: transparent;
+}
+.mobile .PageList {
+border-bottom: none;
+}
+.mobile .tabs-inner .section {
+margin: 0;
+}
+.mobile .tabs-inner .PageList .widget-content {
+background: #ffa183 none;
+color: #ffffff;
+}
+.mobile .tabs-inner .PageList .widget-content .pagelist-arrow {
+border-left: 1px solid #ffffff;
+}
+.mobile .footer-inner {
+overflow: visible;
+}
+body.mobile .AdSense {
+margin: 0 -10px;
+}
+
+--></style>
+<style id='template-skin-1' type='text/css'><!--
+body {
+min-width: 1310px;
+}
+.content-outer, .content-fauxcolumn-outer, .region-inner {
+min-width: 1310px;
+max-width: 1310px;
+_width: 1310px;
+}
+.main-inner .columns {
+padding-left: 0;
+padding-right: 350px;
+}
+.main-inner .fauxcolumn-center-outer {
+left: 0;
+right: 350px;
+/* IE6 does not respect left and right together */
+_width: expression(this.parentNode.offsetWidth -
+parseInt("0") -
+parseInt("350px") + 'px');
+}
+.main-inner .fauxcolumn-left-outer {
+width: 0;
+}
+.main-inner .fauxcolumn-right-outer {
+width: 350px;
+}
+.main-inner .column-left-outer {
+width: 0;
+right: 100%;
+margin-left: -0;
+}
+.main-inner .column-right-outer {
+width: 350px;
+margin-right: -350px;
+}
+#layout {
+min-width: 0;
+}
+#layout .content-outer {
+min-width: 0;
+width: 800px;
+}
+#layout .region-inner {
+min-width: 0;
+width: auto;
+}
+body#layout div.add_widget {
+padding: 8px;
+}
+body#layout div.add_widget a {
+margin-left: 32px;
+}
+--></style>
+<link href='https://www.blogger.com/dyn-css/authorization.css?targetBlogID=8899645800948009496&amp;zx=677ea9f6-35b1-4e64-86be-3cb0750c0623' media='none' onload='if(media!=&#39;all&#39;)media=&#39;all&#39;' rel='stylesheet'/><noscript><link href='https://www.blogger.com/dyn-css/authorization.css?targetBlogID=8899645800948009496&amp;zx=677ea9f6-35b1-4e64-86be-3cb0750c0623' rel='stylesheet'/></noscript>
+<meta name='google-adsense-platform-account' content='ca-host-pub-1556223355139109'/>
+<meta name='google-adsense-platform-domain' content='blogspot.com'/>
+
+</head>
+<body class='loading variant-hummingBirds2'>
+<div class='navbar section' id='navbar' name='Navbar'><div class='widget Navbar' data-version='1' id='Navbar1'><script type="text/javascript">
+    function setAttributeOnload(object, attribute, val) {
+      if(window.addEventListener) {
+        window.addEventListener('load',
+          function(){ object[attribute] = val; }, false);
+      } else {
+        window.attachEvent('onload', function(){ object[attribute] = val; });
+      }
+    }
+  </script>
+<div id="navbar-iframe-container"></div>
+<script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
+<script type="text/javascript">
+      gapi.load("gapi.iframes:gapi.iframes.style.bubble", function() {
+        if (gapi.iframes && gapi.iframes.getContext) {
+          gapi.iframes.getContext().openChild({
+              url: 'https://www.blogger.com/navbar.g?targetBlogID\x3d8899645800948009496\x26blogName\x3dDBMS+Musings\x26publishMode\x3dPUBLISH_MODE_BLOGSPOT\x26navbarType\x3dLIGHT\x26layoutType\x3dLAYOUTS\x26searchRoot\x3dhttps://dbmsmusings.blogspot.com/search\x26blogLocale\x3den\x26v\x3d2\x26homepageUrl\x3dhttp://dbmsmusings.blogspot.com/\x26targetPostID\x3d6159068451380532642\x26blogPostOrPageUrl\x3dhttp://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html\x26vt\x3d-8728415446913970842',
+              where: document.getElementById("navbar-iframe-container"),
+              id: "navbar-iframe"
+          });
+        }
+      });
+    </script><script type="text/javascript">
+(function() {
+var script = document.createElement('script');
+script.type = 'text/javascript';
+script.src = '//pagead2.googlesyndication.com/pagead/js/google_top_exp.js';
+var head = document.getElementsByTagName('head')[0];
+if (head) {
+head.appendChild(script);
+}})();
+</script>
+</div></div>
+<div class='body-fauxcolumns'>
+<div class='fauxcolumn-outer body-fauxcolumn-outer'>
+<div class='cap-top'>
+<div class='cap-left'></div>
+<div class='cap-right'></div>
+</div>
+<div class='fauxborder-left'>
+<div class='fauxborder-right'></div>
+<div class='fauxcolumn-inner'>
+</div>
+</div>
+<div class='cap-bottom'>
+<div class='cap-left'></div>
+<div class='cap-right'></div>
+</div>
+</div>
+</div>
+<div class='content'>
+<div class='content-fauxcolumns'>
+<div class='fauxcolumn-outer content-fauxcolumn-outer'>
+<div class='cap-top'>
+<div class='cap-left'></div>
+<div class='cap-right'></div>
+</div>
+<div class='fauxborder-left'>
+<div class='fauxborder-right'></div>
+<div class='fauxcolumn-inner'>
+</div>
+</div>
+<div class='cap-bottom'>
+<div class='cap-left'></div>
+<div class='cap-right'></div>
+</div>
+</div>
+</div>
+<div class='content-outer'>
+<div class='content-cap-top cap-top'>
+<div class='cap-left'></div>
+<div class='cap-right'></div>
+</div>
+<div class='fauxborder-left content-fauxborder-left'>
+<div class='fauxborder-right content-fauxborder-right'></div>
+<div class='content-inner'>
+<header>
+<div class='header-outer'>
+<div class='header-cap-top cap-top'>
+<div class='cap-left'></div>
+<div class='cap-right'></div>
+</div>
+<div class='fauxborder-left header-fauxborder-left'>
+<div class='fauxborder-right header-fauxborder-right'></div>
+<div class='region-inner header-inner'>
+<div class='header section' id='header' name='Header'><div class='widget Header' data-version='1' id='Header1'>
+<div id='header-inner'>
+<div class='titlewrapper'>
+<h1 class='title'>
+<a href='http://dbmsmusings.blogspot.com/'>
+DBMS Musings
+</a>
+</h1>
+</div>
+<div class='descriptionwrapper'>
+<p class='description'><span>
+</span></p>
+</div>
+</div>
+</div></div>
+</div>
+</div>
+<div class='header-cap-bottom cap-bottom'>
+<div class='cap-left'></div>
+<div class='cap-right'></div>
+</div>
+</div>
+</header>
+<div class='tabs-outer'>
+<div class='tabs-cap-top cap-top'>
+<div class='cap-left'></div>
+<div class='cap-right'></div>
+</div>
+<div class='fauxborder-left tabs-fauxborder-left'>
+<div class='fauxborder-right tabs-fauxborder-right'></div>
+<div class='region-inner tabs-inner'>
+<div class='tabs no-items section' id='crosscol' name='Cross-Column'></div>
+<div class='tabs no-items section' id='crosscol-overflow' name='Cross-Column 2'></div>
+</div>
+</div>
+<div class='tabs-cap-bottom cap-bottom'>
+<div class='cap-left'></div>
+<div class='cap-right'></div>
+</div>
+</div>
+<div class='main-outer'>
+<div class='main-cap-top cap-top'>
+<div class='cap-left'></div>
+<div class='cap-right'></div>
+</div>
+<div class='fauxborder-left main-fauxborder-left'>
+<div class='fauxborder-right main-fauxborder-right'></div>
+<div class='region-inner main-inner'>
+<div class='columns fauxcolumns'>
+<div class='fauxcolumn-outer fauxcolumn-center-outer'>
+<div class='cap-top'>
+<div class='cap-left'></div>
+<div class='cap-right'></div>
+</div>
+<div class='fauxborder-left'>
+<div class='fauxborder-right'></div>
+<div class='fauxcolumn-inner'>
+</div>
+</div>
+<div class='cap-bottom'>
+<div class='cap-left'></div>
+<div class='cap-right'></div>
+</div>
+</div>
+<div class='fauxcolumn-outer fauxcolumn-left-outer'>
+<div class='cap-top'>
+<div class='cap-left'></div>
+<div class='cap-right'></div>
+</div>
+<div class='fauxborder-left'>
+<div class='fauxborder-right'></div>
+<div class='fauxcolumn-inner'>
+</div>
+</div>
+<div class='cap-bottom'>
+<div class='cap-left'></div>
+<div class='cap-right'></div>
+</div>
+</div>
+<div class='fauxcolumn-outer fauxcolumn-right-outer'>
+<div class='cap-top'>
+<div class='cap-left'></div>
+<div class='cap-right'></div>
+</div>
+<div class='fauxborder-left'>
+<div class='fauxborder-right'></div>
+<div class='fauxcolumn-inner'>
+</div>
+</div>
+<div class='cap-bottom'>
+<div class='cap-left'></div>
+<div class='cap-right'></div>
+</div>
+</div>
+<!-- corrects IE6 width calculation -->
+<div class='columns-inner'>
+<div class='column-center-outer'>
+<div class='column-center-inner'>
+<div class='main section' id='main' name='Main'><div class='widget Blog' data-version='1' id='Blog1'>
+<div class='blog-posts hfeed'>
+
+          <div class="date-outer">
+        
+<h2 class='date-header'><span>Friday, January 25, 2019</span></h2>
+
+          <div class="date-posts">
+        
+<div class='post-outer'>
+<div class='post hentry uncustomized-post-template' itemprop='blogPost' itemscope='itemscope' itemtype='http://schema.org/BlogPosting'>
+<meta content='https://lh6.googleusercontent.com/F7giuNAtrYsZz1ZYZPOuqXnnYYfUTiXq-IU-wKkiRbnKqhnEehTA1cIwdDTIQ5MylDjbsKhbjYLyZJkt-HFQQ50BaMtS2Vel_vr0II5vbjl2K6UX3tjQTnOb75ICgeo7IQDmIyeG' itemprop='image_url'/>
+<meta content='8899645800948009496' itemprop='blogId'/>
+<meta content='6159068451380532642' itemprop='postId'/>
+<a name='6159068451380532642'></a>
+<h3 class='post-title entry-title' itemprop='name'>
+It&#8217;s Time to Move on from Two Phase Commit
+</h3>
+<div class='post-header'>
+<div class='post-header-line-1'></div>
+</div>
+<div class='post-body entry-content' id='post-body-6159068451380532642' itemprop='description articleBody'>
+<div dir="ltr" id="docs-internal-guid-79900447-7fff-54aa-d826-6c77a1428553" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">The two-phase commit protocol (2PC) has been </span><a href="https://dl.acm.org/citation.cfm?id=7266" style="text-decoration-line: none;"><span style="background-color: white; color: #1155cc; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">used in enterprise software systems for over three decades</span></a><span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">. It has been an an incredibly impactful protocol for ensuring atomicity and durability of transactions that access data in multiple partitions or shards. It is used everywhere --- both in older &#8220;venerable&#8221; distributed systems, database systems, and file systems such as Oracle, IBM DB2, PostgreSQL, and Microsoft TxF (transactional NTFS), and in younger &#8220;millennial&#8221; systems such as MariaDB, TokuDB, VoltDB, Cloud Spanner, Apache Flink, Apache Kafka, and Azure SQL Database. If your system supports ACID transactions across shards/partitions/databases, there&#8217;s a high probability that it is running 2PC (or some variant thereof) under the covers. [Sometimes it&#8217;s even &#8220;over the covers&#8221; --- older versions of MongoDB </span><a href="https://docs.mongodb.com/v3.4/tutorial/perform-two-phase-commits/" style="text-decoration-line: none;"><span style="background-color: white; color: #1155cc; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">required users to implement 2PC for multi-document transactions in application code</span></a><span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">.]</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">In this post, we will first describe 2PC: how it works and what problems it solves. Then, we will show some major issues with 2PC and how modern systems attempt to get around these issues. Unfortunately, these attempted solutions cause other problems to emerge. In the end, I will make the case that the next generation of distributed systems should avoid 2PC, and how this is possible.</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<h3 dir="ltr" style="font-size: 18.73px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 25.84px; margin-bottom: 5.33px; margin-top: 21.33px;">
+<span style="color: #434343; font-family: &quot;arial&quot;; font-size: 18.66px; font-weight: 400; vertical-align: baseline; white-space: pre-wrap;">Overview of the 2PC protocol</span></h3>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">There are many variants of 2PC, but the basic protocol works as follows: </span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">Background assumption:The work entailed by a transaction has already been divided across all of the shards/partitions that store data accessed by that transaction. We will refer to the effort performed at each shard as being performed by the &#8220;worker&#8221; for that shard. Each worker is able to start working on its responsibilities for a given transaction independently of each other. The 2PC protocol begins at the end of transaction processing, when the transaction is ready to &#8220;commit&#8221;. It is initiated by a single, coordinator machine (which may be one of the workers involved in that transaction).</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">The basic flow of the 2PC protocol is shown in the figure below. [The protocol begins at the top of the figure and then proceeds in a downward direction.]</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<br />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;"><img height="218" src="https://lh6.googleusercontent.com/F7giuNAtrYsZz1ZYZPOuqXnnYYfUTiXq-IU-wKkiRbnKqhnEehTA1cIwdDTIQ5MylDjbsKhbjYLyZJkt-HFQQ50BaMtS2Vel_vr0II5vbjl2K6UX3tjQTnOb75ICgeo7IQDmIyeG" style="border: 0px none rgb(0, 0, 0); transform: matrix(1, 0, 0, 1, 0, 0);" width="400" /></span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<br />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">Phase 1: A coordinator asks each worker whether they have successfully completed their responsibilities for that transaction and are ready to commit. Each worker responds &#8216;yes&#8217; or &#8216;no&#8217;.</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">Phase 2: The coordinator counts all the responses. If every worker responded &#8216;yes&#8217;, then the transaction will commit. Otherwise, it will abort. The coordinator sends a message to each worker with the final commit decision and receives an acknowledgement back.</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">This mechanism ensures the atomicity property of transactions: either the entire transaction will be reflected in the final state of the system, or none of it. If even just a single worker cannot commit, then the entire transaction will be aborted. In other words: each worker has &#8220;veto-power&#8221; for a transaction. </span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">It also ensures transaction durability. Each worker ensures that all of the writes of a transaction have been durably written to storage prior to responding &#8216;yes&#8217; in phase 1. This gives the coordinator freedom to make a final decision about a transaction without concern for the fact that a worker may fail after voting &#8216;yes&#8217;. [In this post, we are being purposefully vague when using the term &#8220;durable writes&#8221; --- this term can either refer to writing to local non-volatile storage or, alternatively, replicating the writes to enough locations for it to be considered &#8220;durable&#8221;.]</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">In addition to durably writing the writes that are directly required by the transaction, the protocol itself requires additional writes that must be made durable before it can proceed. For example, a worker has veto power until the point it votes &#8216;yes&#8217; in phase 1. After that point, it cannot change its vote. But what if it crashes right after voting &#8216;yes&#8217;? When it recovers it might not know that it voted &#8216;yes&#8217;, and still think it has veto power and go ahead and abort the transaction. To prevent this, it must write its vote durably before sending the &#8216;yes&#8217; vote back to the coordinator. [In addition to this example, in standard 2PC, there are two other writes that are made durable prior to sending messages that are part of the protocol.]</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<br />
+<h3 dir="ltr" style="font-size: 18.73px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 25.84px; margin-bottom: 5.33px; margin-top: 21.33px;">
+<span style="color: #434343; font-family: &quot;arial&quot;; font-size: 18.66px; font-weight: 400; vertical-align: baseline; white-space: pre-wrap;">The problems with 2PC</span></h3>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">There are two major problems with 2PC. The first is well known, and discussed in every reputable textbook that presents 2PC. The second is much less well known, but a major problem nonetheless.</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">The well-known problem is referred to as the &#8220;blocking problem&#8221;. This happens when every worker has voted &#8216;yes&#8217;, but the coordinator fails before sending a message with the final decision to at least one worker. The reason why this is a problem is that by voting &#8216;yes&#8217;, each worker has removed its power to veto the transaction. However, the coordinator still has absolute power to decide the final state of a transaction. If the coordinator fails before sending a message with the final decision to at least one worker, the workers cannot get together to make a decision amongst themselves --- they can&#8217;t abort because maybe the coordinator decided to commit before it failed, and they can&#8217;t commit because maybe the coordinator decided to abort before it failed. Thus, they have to block --- wait until the coordinator recovers --- in order to find out the final decision. In the meantime, they cannot process transactions that conflict with the stalled transaction since the final outcome of the writes of that transaction are yet to be determined. </span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">There are two categories of work-arounds to the blocking problem. The first category of work-around modifies the core protocol in order to eliminate the blocking problem. Unfortunately, these modifications reduce the performance --- typically by adding an extra round of communication --- and thus are rarely used in practice. The second category keeps the protocol in tact but reduces the probability of the types of coordinator failure than can lead to the blocking program --- for example, by running 2PC over replica consensus protocols and ensuring that important state for the protocol is replicated at all times. Unfortunately, once again, these work-arounds reduce performance, since the protocol requires that these replica consensus rounds occur sequentially, and thus they may add significant latency to the protocol. </span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">The lesser-known problem is what I call the &#8220;cloggage problem&#8221;. 2PC occurs after transaction is processed, and thus necessarily increases the latency of the transaction by an amount equal to the time it takes to run the protocol. This latency increase alone can already be an issue for many applications, but a potentially larger issue is that worker nodes do not know the final outcome of a transaction until mid-way through the second phase. Until they know the final outcome, they have to be prepared for the possibility that it might abort, and thus they typically prevent conflicting transactions from making progress until they are certain that the transaction will commit. These blocked transactions in turn block other transactions from running, and so on, until 2PC completes and all of the blocked transactions can resume. &nbsp;This cloggage further increases the average transaction latency and also decreases transactional throughput.</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">To summarize the problems we discussed above: 2PC poisons a system along four dimensions: <b>latency </b>(the time of the protocol plus the stall time of conflicting transactions), <b>throughput </b>(because it prevents conflicting transactions from running during the protocol), <b>scalability </b>(the larger the system, the more likely transactions become multi-partition and have to pay the throughput and latency costs of 2PC), and <b>availability </b>(the blocking problem we discussed above). &nbsp;<i>Nobody likes 2PC, but for decades, people have assumed that it is a necessary evil.</i></span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<h3 dir="ltr" style="font-size: 18.73px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 25.84px; margin-bottom: 5.33px; margin-top: 21.33px;">
+<span style="color: #434343; font-family: &quot;arial&quot;; font-size: 18.66px; font-weight: 400; vertical-align: baseline; white-space: pre-wrap;">It&#8217;s time to move on</span></h3>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">For over three decades, we&#8217;ve been stuck with two-phase commit in sharded systems. People are aware of the performance, scalability, and availability problems it introduces, but nonetheless continue on, with no obvious better alternative.</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">The truth is, if we would just architect our systems differently, the need for 2PC would vanish. There have been some attempts to accomplish this --- both in academia (such as <a href="https://cs.uwaterloo.ca/~kdaudjee/courses/cs848/papers/non2PC.pdf" target="_blank">this SIGMOD 2016 paper</a>) and industry. However, these attempts typically work by avoiding multi-sharded transactions in the first place, such as by repartitioning data in advance of a transaction so that it is no longer multi-sharded. Unfortunately, this repartitioning reduces performance of the system in other ways.</span></div>
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;"><br /></span></div>
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">What I am calling for is a deeper type of change in the way we architect distributed systems. I insist that systems should still be able to process multi-sharded transactions --- with all the ACID guarantees and what that entails --- such as atomicity and durability --- but with much simpler and faster commit protocols. </span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; font-weight: 700; vertical-align: baseline; white-space: pre-wrap;">It all comes down to a fundamental assumption that has been present in our systems for decades: a transaction may abort at any time and for any reason.</span><span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;"> Even if I run the same transaction on the same initial system state &#8230; if I run it at 2:00PM it may commit, but at 3:00 it may abort.</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">There are several reasons why most architects believe we need this assumption. First, a machine may fail at anytime --- including in the middle of a transaction. Upon recovery, it is generally impossible to recreate all of the state of that transaction that was in volatile memory prior to the failure. As a result, it is seemingly impossible to pick up where the transaction left off prior to the failure. Therefore, the system aborts all transactions that were in progress at the time of the failure. Since a failure can occur at any time, this means that a transaction may abort at any time.</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">Second, most concurrency control protocols require the ability to abort a transaction at any time. Optimistic protocols perform a &#8220;validation&#8221; phase after processing a transaction. If validation fails, the transaction aborts. &nbsp;Pessimistic protocols typically use locks to prevent concurrency anomalies. This use of locks may lead to deadlock, which is resolved by aborting (at least) one of the deadlocked transactions. Since deadlock may be discovered at any time, the transaction needs to retain the ability to abort at any time.</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">If you look carefully at the two-phase commit protocol, you will see that this arbitrary potential to abort a transaction is the primary source of complexity and latency in the protocol. Workers cannot easily tell each other whether they will commit or not, because they might still fail after this point (before the transaction is committed) and want to abort this transaction during recovery. Therefore, they have to wait until the end of transaction processing (when all important state is made durable) and proceed in the necessary two phases: in the first phase, each worker publically relinquishes its control to abort a transaction, and only then can the second phase occur in which a final decision is made and disseminated.</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">In my opinion we need to </span><span style="background-color: white; font-family: &quot;arial&quot;; font-weight: 700; vertical-align: baseline; white-space: pre-wrap;">remove veto power from workers </span><span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">and </span><span style="background-color: white; font-family: &quot;arial&quot;; font-weight: 700; vertical-align: baseline; white-space: pre-wrap;">architect systems in which the system does not have freedom to abort a transaction whenever it wants</span><span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;"> during its execution. Only logic within a transaction should be allowed to cause a transaction to abort. If it is theoretically possible to commit a transaction given an current state of the database, that transaction must commit, no matter what types of failures occur. Furthermore, there must not be race conditions relative to other concurrently running transactions that can affect the final commit/abort state of a transaction.</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">Removing abort flexibility sounds hard. We&#8217;ll discuss soon how to accomplish this. But first let&#8217;s observe how the commit protocol changes if transactions don&#8217;t have abort flexibility. </span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<h3 dir="ltr" style="font-size: 18.73px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 25.84px; margin-bottom: 5.33px; margin-top: 21.33px;">
+<span style="color: #434343; font-family: &quot;arial&quot;; font-size: 18.66px; font-weight: 400; vertical-align: baseline; white-space: pre-wrap;">What a commit protocol looks like when transactions can&#8217;t abort arbitrarily</span></h3>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">Let&#8217;s look at two examples:</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">In the first example, assume that the worker for the shard that stores the value for variable X is assigned a single task for a transaction: change the value of X to 42. Assume (for now) that there are no integrity constraints or triggers defined on X (which may prevent the system from setting X to 42). In such a case, that worker is never given the power to be able to abort the transaction. No matter what happens, that worker must change X to 42. If that worker fails, it must change X to 42 after it recovers. Since it never has any power to abort, there is no need to check with that worker during the commit protocol to see if it will commit. </span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">In the second example, assume that the worker for the shard that stores the value for variables Y and Z is assigned two tasks for a transaction: subtract 1 from the previous value of Y and set Z to the new value of Y. Furthermore, assume that there is an integrity constraint on Y that states that Y can never go below 0 (e.g., if it represents the inventory of an item in a retail application). Therefore, this worker has to run the equivalent of the following code: </span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF (Y &gt; 0)</span></div>
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Subtract 1 from Y</span></div>
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ELSE</span></div>
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ABORT the transaction</span></div>
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Z = Y</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">This worker must be given the power to abort the transaction since this required by the logic of the application. However, this power is limited. Only if the initial value of Y was 0 can this worker abort the transaction. Otherwise, it has no choice but to commit. Therefore, it doesn&#8217;t have to wait until it has completed the transaction code before knowing whether it will commit or not. On the contrary: as soon as it has finished executing the first line of code in the transaction, it already knows its final commit/abort decision. This implies that the commit protocol will be able to start much earlier relative to 2PC.</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">Let&#8217;s now combine these two examples into a single example in which a transaction is being performed by two workers --- one of them is doing the work described in the first example, and the other one doing the work described in the second example. Since we are guaranteeing atomicity, the first worker cannot simply blindly set X to 42. Rather, it&#8217;s own work must also be dependent on the value of Y. In effect, it&#8217;s transaction code becomes:</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;temp = Do_Remote_Read(Y)</span></div>
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;if (temp &gt; 0)</span></div>
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;X = 42</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">Note that if the first worker&#8217;s code is written in this way, the code for the other worker can be simplified to just: </span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;IF (Y &gt; 0)</span></div>
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Subtract 1 from Y</span></div>
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;"> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Z = Y</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">By writing the transaction code in this way, we have removed explicit abort logic from both workers. Instead, both workers have if statements that check for the constraint that would have caused the original transaction to abort. If the original transaction would have aborted, both workers end up doing nothing. Otherwise, both workers change the values of their local state as required by the transaction logic. </span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">The important thing to note at this point is that </span><span style="background-color: white; font-family: &quot;arial&quot;; font-weight: 700; vertical-align: baseline; white-space: pre-wrap;">the need for a commit protocol has been totally eliminated in the above code</span><span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">. The system is not allowed to abort a transaction for any reason other than conditional logic defined by application code on a given state of the data. And all workers condition their writes on this same conditional logic so that they can all independently decide to &#8220;do nothing&#8221; in those situations where a transaction cannot complete as a result of current system state. Thus, all possibility of a transaction abort has been removed, and there is no need for any kind of distributed protocol at the end of transaction processing to make a combined final decision about the transaction. All of the problems of 2PC have been eliminated. There is no blocking problem because there is no coordinator. And there is no cloggage problem, because all necessary checks are overlapped with transaction processing instead of after it completes. </span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">Moreover, as long as the system is not allowed to abort a transaction for any reason other than the conditional application logic based on input data state, it is always possible to rewrite any transaction as we did above in order to replace abort logic in the code with if statements that conditionally check the abort conditions. Furthermore, it is possible to accomplish this without actually rewriting application code. [The details of how to do this are out of scope for this post, but to summarize at a high level: shards can set special system-owned boolean flags when they have completed any conditional logic that could cause an abort, and it is these boolean flags that are remotely read from other shards.] </span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">In essence: there are two types of aborts that are possible in transaction processing systems: (1) Those that are caused by the state of the data and (2) Those that are caused by the system itself (e.g. failures or deadlocks). Category (1) can always be written in terms of conditional logic on the data as we did above. So if you can eliminate category (2) aborts, the commit protocol can be eliminated.</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">So now, all we have to do is explain how to eliminate category (2) aborts.</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<h3 dir="ltr" style="font-size: 18.73px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 25.84px; margin-bottom: 5.33px; margin-top: 21.33px;">
+<span style="color: #434343; font-family: &quot;arial&quot;; font-size: 18.66px; font-weight: 400; vertical-align: baseline; white-space: pre-wrap;">Removing system-induced aborts</span></h3>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">I have spent almost an entire decade designing systems that do not allow system-induced aborts. Examples of such systems are </span><a href="http://www.cs.umd.edu/~abadi/papers/calvin-sigmod12.pdf" style="text-decoration-line: none;"><span style="background-color: white; color: #1155cc; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">Calvin</span></a><span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">, </span><a href="http://www.cs.umd.edu/~abadi/papers/calvinfs.pdf" style="text-decoration-line: none;"><span style="background-color: white; color: #1155cc; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">CalvinFS</span></a><span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">, </span><a href="http://www.cs.umd.edu/~abadi/papers/orthrus-sigmod16.pdf" style="text-decoration-line: none;"><span style="background-color: white; color: #1155cc; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">Orthrus</span></a><span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">, </span><a href="http://www.cs.umd.edu/~abadi/papers/early-write-visibility.pdf" style="text-decoration-line: none;"><span style="background-color: white; color: #1155cc; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">PVW</span></a><span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">, and a </span><a href="http://www.cs.umd.edu/~abadi/papers/lazy-xacts.pdf" style="text-decoration-line: none;"><span style="background-color: white; color: #1155cc; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">system that processes transactions lazily</span></a><span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">. The impetus for this feature came from the first of these projects --- Calvin --- because of its status of being a deterministic database system. A deterministic database guarantees that there is only one possible final state of the data in the database given a defined set of input requests. It is therefore possible to send the same input to two distinct replicas of the system and be certain that the replicas will process this input independently and end up in the same final state, without any possibility of divergence. </span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">System-induced aborts such as system failure or concurrency control race conditions are fundamentally nondeterministic events. It is very possible that one replica will fail or enter a race condition while the other replica will not. If these nondeterministic events were allowed to result in an a transaction to abort, then one replica may abort a transaction while the other one would commit --- a fundamental violation of the deterministic guarantee. Therefore, we had to design Calvin in a way that failures and race conditions cannot result in a transaction to abort. For concurrency control, Calvin used pessimistic locking with a deadlock avoidance technique that ensured that the system would never get into a situation where it had to abort a transaction due to deadlock. In the face of a system failure, Calvin did not pick up a transaction exactly where it left off (because of the loss of volatile memory during the failure). Nonetheless, it was able to </span><span style="background-color: white; font-family: &quot;arial&quot;; white-space: pre-wrap;">bring the processing of that transaction to completion without having to abort it. It accomplished this</span><span style="background-color: white; font-family: &quot;arial&quot;; white-space: pre-wrap;"> via restarting the transaction from the same original input. </span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">Neither of these solutions --- neither deadlock avoidance nor transaction restart upon a failure --- are limited to being used in deterministic database systems. [Transaction restart gets a little tricky in nondeterministic systems if some of the volatile state associated with a transaction that was lost during a failure was observed by other machines that did not fail. But there are simple ways to solve this problem that are out of scope for this post.] Indeed, some of the other systems I linked to above are nondeterministic systems. Once we realized the power that comes with removing system-level aborts, we built this feature into every system we built after the Calvin project --- even the nondeterministic systems.</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<h3 dir="ltr" style="font-size: 18.73px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 25.84px; margin-bottom: 5.33px; margin-top: 21.33px;">
+<span style="color: #434343; font-family: &quot;arial&quot;; font-size: 18.66px; font-weight: 400; vertical-align: baseline; white-space: pre-wrap;">Conclusion</span></h3>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">I see very little benefit in system architects making continued use of 2PC in sharded systems moving forward. I believe that removing system-induced aborts and rewriting state-induced aborts is the better way forward. Deterministic database systems such as Calvin or </span><a href="https://fauna.com/" style="text-decoration-line: none;"><span style="background-color: white; color: #1155cc; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">FaunaDB </span></a><span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">&nbsp;always remove system-induced aborts anyway, and thus usually can avoid 2PC as we described above. But it is a huge waste to limit this benefit to only deterministic databases. It is not hard to remove system-induced aborts from nondeterministic systems. Recent projects have shown that it is even possible to remove system-induced aborts in systems that use concurrency control techniques other than pessimistic concurrency control. For example, both the PVW and the lazy transaction processing systems we linked to above use a variant of multi-versioned concurrency control. And FaunaDB uses a variant of optimistic concurrency control. </span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div dir="ltr" style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal; line-height: 22.08px;">
+<span style="background-color: white; font-family: &quot;arial&quot;; vertical-align: baseline; white-space: pre-wrap;">In my opinion there is very little excuse to continue with antiquated assumptions regarding the need for system-induced aborts in the system. In the old days when systems ran on single machines, such assumptions were justifiable. However, in modern times, where many systems need to scale to multiple machines that can fail independently of each other, these assumptions require expensive coordination and commit protocols such as 2PC. The performance problems of 2PC has been a major force behind the rise of non-ACID compliant systems that give up important guarantees in order to achieve better scalability, availability, and performance. 2PC is just too slow --- it increases the latency of all transactions --- not just by the length of the protocol itself, but also by preventing transactions that access the same set of data from running concurrently. 2PC also limits scalability (by reducing concurrency) and availability (the blocking problem we discussed above). The way forward is clear: we need to reconsider antiquated assumptions when designing our systems and say &#8220;good-bye&#8221; to two phase commit!</span></div>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<br />
+<span style="font-size: xx-small;">[This article includes a description of work that was funded by the NSF under grant IIS-1763797. Any opinions, findings, and conclusions or recommendations expressed in this article are those of Daniel Abadi and do not necessarily reflect the views of the National Science Foundation.]</span>
+<br style="font-size: 16px; font-variant-east-asian: normal; font-variant-numeric: normal;" />
+<div style='clear: both;'></div>
+</div>
+<div class='post-footer'>
+<div class='post-footer-line post-footer-line-1'>
+<span class='post-author vcard'>
+Posted by
+<span class='fn' itemprop='author' itemscope='itemscope' itemtype='http://schema.org/Person'>
+<meta content='https://www.blogger.com/profile/16753133043157018521' itemprop='url'/>
+<a class='g-profile' href='https://www.blogger.com/profile/16753133043157018521' rel='author' title='author profile'>
+<span itemprop='name'>Daniel Abadi</span>
+</a>
+</span>
+</span>
+<span class='post-timestamp'>
+at
+<meta content='http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html' itemprop='url'/>
+<a class='timestamp-link' href='http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html' rel='bookmark' title='permanent link'><abbr class='published' itemprop='datePublished' title='2019-01-25T08:30:00-08:00'>8:30 AM</abbr></a>
+</span>
+<span class='post-comment-link'>
+</span>
+<span class='post-icons'>
+<span class='item-control blog-admin pid-2045359914'>
+<a href='https://www.blogger.com/post-edit.g?blogID=8899645800948009496&postID=6159068451380532642&from=pencil' title='Edit Post'>
+<img alt='' class='icon-action' height='18' src='https://resources.blogblog.com/img/icon18_edit_allbkg.gif' width='18'/>
+</a>
+</span>
+</span>
+<div class='post-share-buttons goog-inline-block'>
+<a class='goog-inline-block share-button sb-email' href='https://www.blogger.com/share-post.g?blogID=8899645800948009496&postID=6159068451380532642&target=email' target='_blank' title='Email This'><span class='share-button-link-text'>Email This</span></a><a class='goog-inline-block share-button sb-blog' href='https://www.blogger.com/share-post.g?blogID=8899645800948009496&postID=6159068451380532642&target=blog' onclick='window.open(this.href, "_blank", "height=270,width=475"); return false;' target='_blank' title='BlogThis!'><span class='share-button-link-text'>BlogThis!</span></a><a class='goog-inline-block share-button sb-twitter' href='https://www.blogger.com/share-post.g?blogID=8899645800948009496&postID=6159068451380532642&target=twitter' target='_blank' title='Share to Twitter'><span class='share-button-link-text'>Share to Twitter</span></a><a class='goog-inline-block share-button sb-facebook' href='https://www.blogger.com/share-post.g?blogID=8899645800948009496&postID=6159068451380532642&target=facebook' onclick='window.open(this.href, "_blank", "height=430,width=640"); return false;' target='_blank' title='Share to Facebook'><span class='share-button-link-text'>Share to Facebook</span></a><a class='goog-inline-block share-button sb-pinterest' href='https://www.blogger.com/share-post.g?blogID=8899645800948009496&postID=6159068451380532642&target=pinterest' target='_blank' title='Share to Pinterest'><span class='share-button-link-text'>Share to Pinterest</span></a>
+</div>
+</div>
+<div class='post-footer-line post-footer-line-2'>
+<span class='post-labels'>
+</span>
+</div>
+<div class='post-footer-line post-footer-line-3'>
+<span class='post-location'>
+</span>
+</div>
+</div>
+</div>
+<div class='comments' id='comments'>
+<a name='comments'></a>
+<h4>33 comments:</h4>
+<div class='comments-content'>
+<script async='async' src='' type='text/javascript'></script>
+<script type='text/javascript'>
+    (function() {
+      var items = null;
+      var msgs = null;
+      var config = {};
+
+// <![CDATA[
+      var cursor = null;
+      if (items && items.length > 0) {
+        cursor = parseInt(items[items.length - 1].timestamp) + 1;
+      }
+
+      var bodyFromEntry = function(entry) {
+        var text = (entry &&
+                    ((entry.content && entry.content.$t) ||
+                     (entry.summary && entry.summary.$t))) ||
+            '';
+        if (entry && entry.gd$extendedProperty) {
+          for (var k in entry.gd$extendedProperty) {
+            if (entry.gd$extendedProperty[k].name == 'blogger.contentRemoved') {
+              return '<span class="deleted-comment">' + text + '</span>';
+            }
+          }
+        }
+        return text;
+      }
+
+      var parse = function(data) {
+        cursor = null;
+        var comments = [];
+        if (data && data.feed && data.feed.entry) {
+          for (var i = 0, entry; entry = data.feed.entry[i]; i++) {
+            var comment = {};
+            // comment ID, parsed out of the original id format
+            var id = /blog-(\d+).post-(\d+)/.exec(entry.id.$t);
+            comment.id = id ? id[2] : null;
+            comment.body = bodyFromEntry(entry);
+            comment.timestamp = Date.parse(entry.published.$t) + '';
+            if (entry.author && entry.author.constructor === Array) {
+              var auth = entry.author[0];
+              if (auth) {
+                comment.author = {
+                  name: (auth.name ? auth.name.$t : undefined),
+                  profileUrl: (auth.uri ? auth.uri.$t : undefined),
+                  avatarUrl: (auth.gd$image ? auth.gd$image.src : undefined)
+                };
+              }
+            }
+            if (entry.link) {
+              if (entry.link[2]) {
+                comment.link = comment.permalink = entry.link[2].href;
+              }
+              if (entry.link[3]) {
+                var pid = /.*comments\/default\/(\d+)\?.*/.exec(entry.link[3].href);
+                if (pid && pid[1]) {
+                  comment.parentId = pid[1];
+                }
+              }
+            }
+            comment.deleteclass = 'item-control blog-admin';
+            if (entry.gd$extendedProperty) {
+              for (var k in entry.gd$extendedProperty) {
+                if (entry.gd$extendedProperty[k].name == 'blogger.itemClass') {
+                  comment.deleteclass += ' ' + entry.gd$extendedProperty[k].value;
+                } else if (entry.gd$extendedProperty[k].name == 'blogger.displayTime') {
+                  comment.displayTime = entry.gd$extendedProperty[k].value;
+                }
+              }
+            }
+            comments.push(comment);
+          }
+        }
+        return comments;
+      };
+
+      var paginator = function(callback) {
+        if (hasMore()) {
+          var url = config.feed + '?alt=json&v=2&orderby=published&reverse=false&max-results=50';
+          if (cursor) {
+            url += '&published-min=' + new Date(cursor).toISOString();
+          }
+          window.bloggercomments = function(data) {
+            var parsed = parse(data);
+            cursor = parsed.length < 50 ? null
+                : parseInt(parsed[parsed.length - 1].timestamp) + 1
+            callback(parsed);
+            window.bloggercomments = null;
+          }
+          url += '&callback=bloggercomments';
+          var script = document.createElement('script');
+          script.type = 'text/javascript';
+          script.src = url;
+          document.getElementsByTagName('head')[0].appendChild(script);
+        }
+      };
+      var hasMore = function() {
+        return !!cursor;
+      };
+      var getMeta = function(key, comment) {
+        if ('iswriter' == key) {
+          var matches = !!comment.author
+              && comment.author.name == config.authorName
+              && comment.author.profileUrl == config.authorUrl;
+          return matches ? 'true' : '';
+        } else if ('deletelink' == key) {
+          return config.baseUri + '/delete-comment.g?blogID='
+               + config.blogId + '&postID=' + comment.id;
+        } else if ('deleteclass' == key) {
+          return comment.deleteclass;
+        }
+        return '';
+      };
+
+      var replybox = null;
+      var replyUrlParts = null;
+      var replyParent = undefined;
+
+      var onReply = function(commentId, domId) {
+        if (replybox == null) {
+          // lazily cache replybox, and adjust to suit this style:
+          replybox = document.getElementById('comment-editor');
+          if (replybox != null) {
+            replybox.height = '250px';
+            replybox.style.display = 'block';
+            replyUrlParts = replybox.src.split('#');
+          }
+        }
+        if (replybox && (commentId !== replyParent)) {
+          replybox.src = '';
+          document.getElementById(domId).insertBefore(replybox, null);
+          replybox.src = replyUrlParts[0]
+              + (commentId ? '&parentID=' + commentId : '')
+              + '#' + replyUrlParts[1];
+          replyParent = commentId;
+        }
+      };
+
+      var hash = (window.location.hash || '#').substring(1);
+      var startThread, targetComment;
+      if (/^comment-form_/.test(hash)) {
+        startThread = hash.substring('comment-form_'.length);
+      } else if (/^c[0-9]+$/.test(hash)) {
+        targetComment = hash.substring(1);
+      }
+
+      // Configure commenting API:
+      var configJso = {
+        'maxDepth': config.maxThreadDepth
+      };
+      var provider = {
+        'id': config.postId,
+        'data': items,
+        'loadNext': paginator,
+        'hasMore': hasMore,
+        'getMeta': getMeta,
+        'onReply': onReply,
+        'rendered': true,
+        'initComment': targetComment,
+        'initReplyThread': startThread,
+        'config': configJso,
+        'messages': msgs
+      };
+
+      var render = function() {
+        if (window.goog && window.goog.comments) {
+          var holder = document.getElementById('comment-holder');
+          window.goog.comments.render(holder, provider);
+        }
+      };
+
+      // render now, or queue to render when library loads:
+      if (window.goog && window.goog.comments) {
+        render();
+      } else {
+        window.goog = window.goog || {};
+        window.goog.comments = window.goog.comments || {};
+        window.goog.comments.loadQueue = window.goog.comments.loadQueue || [];
+        window.goog.comments.loadQueue.push(render);
+      }
+    })();
+// ]]>
+  </script>
+<div id='comment-holder'>
+<div class="comment-thread toplevel-thread"><ol id="top-ra"><li class="comment" id="c8365905250480973206"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/03064561591782229841" rel="nofollow">Unknown</a></cite><span class="icon user "></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1548446311260#c8365905250480973206">January 25, 2019 at 11:58 AM</a></span></div><p class="comment-content">Please build something to address this</p><span class="comment-actions secondary-text"><a class="comment-reply" target="_self" data-comment-id="8365905250480973206">Reply</a><span class="item-control blog-admin blog-admin pid-1623631154"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=8365905250480973206">Delete</a></span></span></div><div class="comment-replies"><div id="c8365905250480973206-rt" class="comment-thread inline-thread"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c8365905250480973206-ra" class="thread-chrome thread-expanded"><div><li class="comment" id="c5391757666442408154"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/03067803657727403662" rel="nofollow">Evan</a></cite><span class="icon user "></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1548470821331#c5391757666442408154">January 25, 2019 at 6:47 PM</a></span></div><p class="comment-content">FaunaDB is that something: https://fauna.com/</p><span class="comment-actions secondary-text"><span class="item-control blog-admin blog-admin pid-1296188924"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=5391757666442408154">Delete</a></span></span></div><div class="comment-replies"><div id="c5391757666442408154-rt" class="comment-thread inline-thread hidden"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c5391757666442408154-ra" class="thread-chrome thread-expanded"><div></div><div id="c5391757666442408154-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="5391757666442408154">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c5391757666442408154-ce"></div></li></div><div id="c8365905250480973206-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="8365905250480973206">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c8365905250480973206-ce"></div></li><li class="comment" id="c355925193635943538"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/03566390722573815513" rel="nofollow">Zhixiang</a></cite><span class="icon user "></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1548455590032#c355925193635943538">January 25, 2019 at 2:33 PM</a></span></div><p class="comment-content">2PC is a theory formally, but your contract &quot;cannot exit arbitarily&quot; is just a Pragmatism which cannot be analysised and modeled formally.</p><span class="comment-actions secondary-text"><a class="comment-reply" target="_self" data-comment-id="355925193635943538">Reply</a><span class="item-control blog-admin blog-admin pid-670937267"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=355925193635943538">Delete</a></span></span></div><div class="comment-replies"><div id="c355925193635943538-rt" class="comment-thread inline-thread hidden"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c355925193635943538-ra" class="thread-chrome thread-expanded"><div></div><div id="c355925193635943538-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="355925193635943538">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c355925193635943538-ce"></div></li><li class="comment" id="c8758332758754867577"><div class="avatar-image-container"><img src="" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/01085063017919411921" rel="nofollow">Alexander Kolev</a></cite><span class="icon user "></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1548494559336#c8758332758754867577">January 26, 2019 at 1:22 AM</a></span></div><p class="comment-content">can&#39;t exactly see how removing the abortability from individual works with the proposed example preserves ACID<br><br>in the example above, the workers just retrying doesn&#39;t cut it as the whole thing then gets down to guaranteeing ordering of transactions (otherwise &#39;set 42&#39; may come at the wrong time and mess up concurrent transactions the worker has executed already)<br><br>smth is missing here</p><span class="comment-actions secondary-text"><a class="comment-reply" target="_self" data-comment-id="8758332758754867577">Reply</a><span class="item-control blog-admin blog-admin pid-1886149642"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=8758332758754867577">Delete</a></span></span></div><div class="comment-replies"><div id="c8758332758754867577-rt" class="comment-thread inline-thread"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c8758332758754867577-ra" class="thread-chrome thread-expanded"><div><li class="comment" id="c2333811123150706580"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/16753133043157018521" rel="nofollow">Daniel Abadi</a></cite><span class="icon user blog-author"></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1548556115317#c2333811123150706580">January 26, 2019 at 6:28 PM</a></span></div><p class="comment-content">I&#39;m not sure I understand your question, but maybe your question is related to what PVSS asked below?</p><span class="comment-actions secondary-text"><span class="item-control blog-admin blog-admin pid-2045359914"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=2333811123150706580">Delete</a></span></span></div><div class="comment-replies"><div id="c2333811123150706580-rt" class="comment-thread inline-thread hidden"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c2333811123150706580-ra" class="thread-chrome thread-expanded"><div></div><div id="c2333811123150706580-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="2333811123150706580">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c2333811123150706580-ce"></div></li></div><div id="c8758332758754867577-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="8758332758754867577">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c8758332758754867577-ce"></div></li><li class="comment" id="c6808915616065403749"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/12697212503313000904" rel="nofollow">PVSS</a></cite><span class="icon user "></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1548545091586#c6808915616065403749">January 26, 2019 at 3:24 PM</a></span></div><p class="comment-content">What if the value of Y changed (let&#39;s say from 3 to 0 by another process within the second worker) between Do_Remote_Read(Y) and the execution of code in the second worker?</p><span class="comment-actions secondary-text"><a class="comment-reply" target="_self" data-comment-id="6808915616065403749">Reply</a><span class="item-control blog-admin blog-admin pid-1040045893"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=6808915616065403749">Delete</a></span></span></div><div class="comment-replies"><div id="c6808915616065403749-rt" class="comment-thread inline-thread"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c6808915616065403749-ra" class="thread-chrome thread-expanded"><div><li class="comment" id="c1923161142712515388"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/16753133043157018521" rel="nofollow">Daniel Abadi</a></cite><span class="icon user blog-author"></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1548555964942#c1923161142712515388">January 26, 2019 at 6:26 PM</a></span></div><p class="comment-content">A similar question was also asked on the hackernews thread --- https://news.ycombinator.com/item?id=19000842<br><br>Let me know if that thread answers your question. If not, let&#39;s continue the discussion in this thread.</p><span class="comment-actions secondary-text"><span class="item-control blog-admin blog-admin pid-2045359914"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=1923161142712515388">Delete</a></span></span></div><div class="comment-replies"><div id="c1923161142712515388-rt" class="comment-thread inline-thread hidden"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c1923161142712515388-ra" class="thread-chrome thread-expanded"><div></div><div id="c1923161142712515388-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="1923161142712515388">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c1923161142712515388-ce"></div></li><li class="comment" id="c1284686899355124978"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/11909208362786953206" rel="nofollow">Ashok Koyi</a></cite><span class="icon user "></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1549312927573#c1284686899355124978">February 4, 2019 at 12:42 PM</a></span></div><p class="comment-content">This comment has been removed by the author.</p><span class="comment-actions secondary-text"><span class="item-control blog-admin blog-admin "><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=1284686899355124978">Delete</a></span></span></div><div class="comment-replies"><div id="c1284686899355124978-rt" class="comment-thread inline-thread hidden"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c1284686899355124978-ra" class="thread-chrome thread-expanded"><div></div><div id="c1284686899355124978-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="1284686899355124978">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c1284686899355124978-ce"></div></li><li class="comment" id="c3984883699177199237"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/11909208362786953206" rel="nofollow">Ashok Koyi</a></cite><span class="icon user "></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1549312970551#c3984883699177199237">February 4, 2019 at 12:42 PM</a></span></div><p class="comment-content">Hi,<br><br>I went over ycombinator thread &amp; still did not understand how the response solved the issue<br><br>I am sure I am missing something, appreciate if you can explain</p><span class="comment-actions secondary-text"><span class="item-control blog-admin blog-admin pid-2093142514"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=3984883699177199237">Delete</a></span></span></div><div class="comment-replies"><div id="c3984883699177199237-rt" class="comment-thread inline-thread hidden"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c3984883699177199237-ra" class="thread-chrome thread-expanded"><div></div><div id="c3984883699177199237-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="3984883699177199237">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c3984883699177199237-ce"></div></li><li class="comment" id="c3284649612862878218"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/11909208362786953206" rel="nofollow">Ashok Koyi</a></cite><span class="icon user "></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1549313156942#c3284649612862878218">February 4, 2019 at 12:45 PM</a></span></div><p class="comment-content">Also, another question. What if Y value was reduced but X change failed in the first worker? Does not that leave the system in inconsistent state for anyone else who depend on a combination of Y &amp; X value combination?<br><br>Even here, I am certain that I am missing something. Appreciate your help</p><span class="comment-actions secondary-text"><span class="item-control blog-admin blog-admin pid-2093142514"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=3284649612862878218">Delete</a></span></span></div><div class="comment-replies"><div id="c3284649612862878218-rt" class="comment-thread inline-thread hidden"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c3284649612862878218-ra" class="thread-chrome thread-expanded"><div></div><div id="c3284649612862878218-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="3284649612862878218">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c3284649612862878218-ce"></div></li><li class="comment" id="c7364024335972185110"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/16753133043157018521" rel="nofollow">Daniel Abadi</a></cite><span class="icon user blog-author"></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1549651158213#c7364024335972185110">February 8, 2019 at 10:39 AM</a></span></div><p class="comment-content">In the example in my post, there is no state of the database that could exist that would force the update of X to fail. So only system-issues can potentially cause X to fail. The point I&#39;m making in my post is that all such system issues are nondeterministic. Therefore, retrying the update of X until it succeeds will work, since eventually it will succeed. Therefore, I&#39;m suggesting that we should be retrying transactions instead of giving up on them. This simple change enables getting rid of 2PC.</p><span class="comment-actions secondary-text"><span class="item-control blog-admin blog-admin pid-2045359914"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=7364024335972185110">Delete</a></span></span></div><div class="comment-replies"><div id="c7364024335972185110-rt" class="comment-thread inline-thread hidden"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c7364024335972185110-ra" class="thread-chrome thread-expanded"><div></div><div id="c7364024335972185110-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="7364024335972185110">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c7364024335972185110-ce"></div></li></div><div id="c6808915616065403749-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="6808915616065403749">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c6808915616065403749-ce"></div></li><li class="comment" id="c2956861583652889794"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/16753133043157018521" rel="nofollow">Daniel Abadi</a></cite><span class="icon user blog-author"></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1548555741574#c2956861583652889794">January 26, 2019 at 6:22 PM</a></span></div><p class="comment-content">To my readers: a link to this post was put up on hackernews, and there are 136 comments there (as of the time of me writing this). I responded to a bunch of questions there. However, I prefer if the discussion of this post proceeds here because I do not get notified of new comments on the hackernews thread.</p><span class="comment-actions secondary-text"><a class="comment-reply" target="_self" data-comment-id="2956861583652889794">Reply</a><span class="item-control blog-admin blog-admin pid-2045359914"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=2956861583652889794">Delete</a></span></span></div><div class="comment-replies"><div id="c2956861583652889794-rt" class="comment-thread inline-thread"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c2956861583652889794-ra" class="thread-chrome thread-expanded"><div><li class="comment" id="c4773822540771473451"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/16753133043157018521" rel="nofollow">Daniel Abadi</a></cite><span class="icon user blog-author"></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1548555801313#c4773822540771473451">January 26, 2019 at 6:23 PM</a></span></div><p class="comment-content">BTW: the link to the hackernews comment thread is: https://news.ycombinator.com/item?id=18999520</p><span class="comment-actions secondary-text"><span class="item-control blog-admin blog-admin pid-2045359914"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=4773822540771473451">Delete</a></span></span></div><div class="comment-replies"><div id="c4773822540771473451-rt" class="comment-thread inline-thread hidden"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c4773822540771473451-ra" class="thread-chrome thread-expanded"><div></div><div id="c4773822540771473451-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="4773822540771473451">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c4773822540771473451-ce"></div></li></div><div id="c2956861583652889794-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="2956861583652889794">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c2956861583652889794-ce"></div></li><li class="comment" id="c3648512668834370543"><div class="avatar-image-container"><img src="//1.bp.blogspot.com/-E2Cc7_sd3Hs/W6nSlkbLKMI/AAAAAAABxYg/pWUgBHXs_jcrV5lFFD_FawAATYB_42k2QCK4BGAYYCw/s35/lu.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/13617812427597418779" rel="nofollow">Lu Pan</a></cite><span class="icon user "></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1548639452253#c3648512668834370543">January 27, 2019 at 5:37 PM</a></span></div><p class="comment-content">Love your work!<br><br>I think this is very similar to RAMP transaction. Both provide many nice attributes like non-blocking, concurrent transactions, etc. at the cost of having pretty significant write amplification for storing transaction metadata and multiple versions of each key.<br><br>I think this proposal should be better compared to RAMP instead of 2pc. And in RAMP paper, it states that this doesn&#39;t solve all the problems. E.g. how would you do the traditional read-modify-write with this algorithm? Maybe I am missing something. Thanks for the writeup! Always a good read :)</p><span class="comment-actions secondary-text"><a class="comment-reply" target="_self" data-comment-id="3648512668834370543">Reply</a><span class="item-control blog-admin blog-admin pid-1816310289"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=3648512668834370543">Delete</a></span></span></div><div class="comment-replies"><div id="c3648512668834370543-rt" class="comment-thread inline-thread"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c3648512668834370543-ra" class="thread-chrome thread-expanded"><div><li class="comment" id="c8886290706153629767"><div class="avatar-image-container"><img src="//1.bp.blogspot.com/-E2Cc7_sd3Hs/W6nSlkbLKMI/AAAAAAABxYg/pWUgBHXs_jcrV5lFFD_FawAATYB_42k2QCK4BGAYYCw/s35/lu.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/13617812427597418779" rel="nofollow">Lu Pan</a></cite><span class="icon user "></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1548639954177#c8886290706153629767">January 27, 2019 at 5:45 PM</a></span></div><p class="comment-content">To answer my own question, I guess read-modify-write can be modeled as a condition on the write. So it should work. I guess this means the only advantage of 2pc is smaller write amplification.</p><span class="comment-actions secondary-text"><span class="item-control blog-admin blog-admin pid-1816310289"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=8886290706153629767">Delete</a></span></span></div><div class="comment-replies"><div id="c8886290706153629767-rt" class="comment-thread inline-thread hidden"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c8886290706153629767-ra" class="thread-chrome thread-expanded"><div></div><div id="c8886290706153629767-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="8886290706153629767">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c8886290706153629767-ce"></div></li></div><div id="c3648512668834370543-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="3648512668834370543">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c3648512668834370543-ce"></div></li><li class="comment" id="c485572401737909757"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/02517642511566779455" rel="nofollow">hysteriaa</a></cite><span class="icon user "></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1548641299763#c485572401737909757">January 27, 2019 at 6:08 PM</a></span></div><p class="comment-content">Hi Daniel,<br><br>Thanks for this interesting post. I have a few questions:<br><br>1) Does this model only work for one-shot transactions? How can a worker know ahead of time which other workers&#39; &quot;boolean flags&quot; it will need to check if the transaction is conversational?<br>2) Since no worker can abort voluntarily, a network partition between two workers can have severe impact - a participant will have to keep its resources locked for as long as the partition lasts, right?</p><span class="comment-actions secondary-text"><a class="comment-reply" target="_self" data-comment-id="485572401737909757">Reply</a><span class="item-control blog-admin blog-admin pid-484800099"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=485572401737909757">Delete</a></span></span></div><div class="comment-replies"><div id="c485572401737909757-rt" class="comment-thread inline-thread"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c485572401737909757-ra" class="thread-chrome thread-expanded"><div><li class="comment" id="c8317819968687046894"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/16753133043157018521" rel="nofollow">Daniel Abadi</a></cite><span class="icon user blog-author"></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1548787217163#c8317819968687046894">January 29, 2019 at 10:40 AM</a></span></div><p class="comment-content">To answer your questions:<br><br>(1) The assumption is that there is some process that is dividing the work across the workers. This process, when it sends the work to the workers, includes annotations on which other workers may have state-based aborts. If it doesn&#39;t know for sure about a particular worker, it must be conservative. [Obviously, this is just an optimization. Without this optimization, all workers would have to be checked.]<br><br>(2) Yes. But two things to mention:<br><br>(i) In most Calvin deployments, there was a full replica of the DB within each region, so it never had to worry about having different shards for the same xact located in different regions. [Network partitions are more likely across regions.] But in general, if you have different shards in different regions, a network partition would cause unavailability. <br><br>(ii) Most systems that run 2PC are CP systems from CAP, in which case network partitions cause unavailability anyway.</p><span class="comment-actions secondary-text"><span class="item-control blog-admin blog-admin pid-2045359914"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=8317819968687046894">Delete</a></span></span></div><div class="comment-replies"><div id="c8317819968687046894-rt" class="comment-thread inline-thread hidden"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c8317819968687046894-ra" class="thread-chrome thread-expanded"><div></div><div id="c8317819968687046894-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="8317819968687046894">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c8317819968687046894-ce"></div></li></div><div id="c485572401737909757-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="485572401737909757">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c485572401737909757-ce"></div></li><li class="comment" id="c8595903040920647689"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/17489178762436269116" rel="nofollow">Sugu Sougoumarne</a></cite><span class="icon user "></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1549953884772#c8595903040920647689">February 11, 2019 at 10:44 PM</a></span></div><p class="comment-content">Hi Daniel,<br><br>To intro myself, I&#39;m the co-creator of the vitess.io project that helps scale MySQL databases through sharding. I&#39;ve been trying to improve our story on distributed transactions. My blog is https://ssougou.blogspot.com (I should blog more often).<br><br>I discovered your work recently, and have been a big fan. I&#39;ve been slowly catching up :).<br><br>The way I would interpret your post is as follows: All transactions are always in the prepared state. The prepared state gives you the following guarantees:<br>1. A node will not commit or rollback unless specifically requested.<br>2. Will not lose data. If a node crashes, it will resurrect itself back and all the transactions will be restored to their prepared state.<br><br>If all transactions are always in this state, then the implicit decision is to commit (because all transactions are prepared already).<br><br>I&#39;m trying to see how this will map to a transactional system where DMLs are separate from the final commit request. I&#39;m  afraid that this is not applicable to such systems.<br><br>The easy part, of course, is the commit.<br><br>The part I&#39;m struggling with is the flow where the app may want to rollback. Let&#39;s say the app issues DMLs to node A, then encounters an error half way through changes in node B. It would like to rollback everything so far. I don&#39;t see how this can be guaranteed. And if the app crashes at this time, there is no one to even know the decision to rollback.<br><br>By the prepare rule, the node cannot make the decision. Also, no one else can because the app has crashed and lost the context.<br><br>If this requires a long response, feel free to email me at sougou@planetscale.com.</p><span class="comment-actions secondary-text"><a class="comment-reply" target="_self" data-comment-id="8595903040920647689">Reply</a><span class="item-control blog-admin blog-admin pid-2064491623"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=8595903040920647689">Delete</a></span></span></div><div class="comment-replies"><div id="c8595903040920647689-rt" class="comment-thread inline-thread"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c8595903040920647689-ra" class="thread-chrome thread-expanded"><div><li class="comment" id="c5523652585695216367"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/16753133043157018521" rel="nofollow">Daniel Abadi</a></cite><span class="icon user blog-author"></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1549993215448#c5523652585695216367">February 12, 2019 at 9:40 AM</a></span></div><p class="comment-content">Transactions are presumed to definitely commit (eventually) under what&#39;s described here unless the state of the data prevents the transaction from committing. Application aborts that are based on data state work as described in this post. Application aborts that are not based on data state require a separate agreement protocol in order to override the presumed commit nature of what is described here. </p><span class="comment-actions secondary-text"><span class="item-control blog-admin blog-admin pid-2045359914"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=5523652585695216367">Delete</a></span></span></div><div class="comment-replies"><div id="c5523652585695216367-rt" class="comment-thread inline-thread hidden"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c5523652585695216367-ra" class="thread-chrome thread-expanded"><div></div><div id="c5523652585695216367-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="5523652585695216367">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c5523652585695216367-ce"></div></li></div><div id="c8595903040920647689-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="8595903040920647689">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c8595903040920647689-ce"></div></li><li class="comment" id="c7836154191803402746"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/06815985061043837263" rel="nofollow">Unknown</a></cite><span class="icon user "></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1550093889720#c7836154191803402746">February 13, 2019 at 1:38 PM</a></span></div><p class="comment-content">This is a great read, thank you Daniel.<br><br>Just wanted to point out that Kafka&#39;s transactional messaging (https://cwiki.apache.org/confluence/display/KAFKA/KIP-98+-+Exactly+Once+Delivery+and+Transactional+Messaging) did not employ the 2PC protocol, although admittedly its implementation function names may be confusing. The key idea is actually similar to your proposal here:<br><br>1) We have a single &quot;coordinator&quot; module that maintains a transaction log which is the source-of-truth of the txn state, stored as an internal Kafka topic (think of it as the sequencer that orders all the txns to workers).<br><br>2) Once the client / this coordinator module determines to commit or abort a txn, a prepare_abort / commit entry is appended to the txn log -- again, the `prepare` prefix here may be misleading, but it is actually the &quot;final decision&quot; of this txn, such that even if the coordinator fails after that, upon failing over the new coordinator will still enforce the txn to be completed as commit / abort. The entry itself is only to remind the (newly elected) coordinator that this txn decision may not yet propagated to all the brokers.<br><br>3) There are some additional requirement for Kafka such as per-partition ordering, such that consumers should read messages in offset ordering. And hence if the decision of a previous txn that appends message at, e.g. offset 10 has not been propagated from coordinator, then even if offset 11&#39;s messages are from another txn that is determined to be committed, the consumer still cannot fetch offset 11 before offset 10. But this is less related to your point in this blog post.</p><span class="comment-actions secondary-text"><a class="comment-reply" target="_self" data-comment-id="7836154191803402746">Reply</a><span class="item-control blog-admin blog-admin pid-308351474"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=7836154191803402746">Delete</a></span></span></div><div class="comment-replies"><div id="c7836154191803402746-rt" class="comment-thread inline-thread"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c7836154191803402746-ra" class="thread-chrome thread-expanded"><div><li class="comment" id="c1992348086634336760"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/16753133043157018521" rel="nofollow">Daniel Abadi</a></cite><span class="icon user blog-author"></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1550101901452#c1992348086634336760">February 13, 2019 at 3:51 PM</a></span></div><p class="comment-content">Thanks for the clarification on Kafka&#39;s protocol.<br><br>(Note that one difference between Kafka&#39;s protocol and the one described here is the lack of a need for a coordinator in the one described here.)</p><span class="comment-actions secondary-text"><span class="item-control blog-admin blog-admin pid-2045359914"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=1992348086634336760">Delete</a></span></span></div><div class="comment-replies"><div id="c1992348086634336760-rt" class="comment-thread inline-thread hidden"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c1992348086634336760-ra" class="thread-chrome thread-expanded"><div></div><div id="c1992348086634336760-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="1992348086634336760">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c1992348086634336760-ce"></div></li></div><div id="c7836154191803402746-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="7836154191803402746">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c7836154191803402746-ce"></div></li><li class="comment" id="c12379525458601231"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/01413596611586340970" rel="nofollow">Tim</a></cite><span class="icon user "></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1558520881411#c12379525458601231">May 22, 2019 at 3:28 AM</a></span></div><p class="comment-content">Hi Daniel, <br>Great post and discussion.<br>I&#39;m breaking my head on the solving of the cloggage problem though.<br><br>In you example you say that &quot;there is no cloggage problem, because all necessary checks are overlapped with transaction processing instead of after it completes.&quot;<br><br>But as far as I understand, this is the case because of the introduction of `Do_Remote_Read(Y)` where we read the specific version of Y as of the current &quot;transaction&quot; using some ID. So `Do_Remote_Read(Y, transactionId)`.<br>So in the case of 2 parallel transactions, both accessing the same object/shard which contains Y.<br><br>A, owner of X:<br>temp = Do_Remote_Read(Y)<br>      if (temp &gt; 0)<br>         X = 42<br><br>B, owner if Y:<br>temp = Do_Remote_Read(X)<br>IF (Y &gt; 0 &amp;&amp; temp &gt; 0)<br>         Subtract 1 from Y<br><br>C, owner of W:<br>temp = Do_Remote_Read(Y)<br>IF (temp &gt; 0)<br>         Subtract 1 from W<br><br>In this case A and B will block on `Do_Remote_Read(Y/X,1)` until they have a response.<br>If in the mean time C does `Do_Remote_Read(Y, 2)`, B can not give a the read response yet to C, until it itself has received its response from A. It has to wait on A to do the local `IF` check, and update the value of Y. Only then it can answer C. <br>So to me it seems that there is still a cloggage problem on B, since responses have to be delayed.<br><br>Am I making a mistake somewhere?<br><br>Best regards,<br>Tim</p><span class="comment-actions secondary-text"><a class="comment-reply" target="_self" data-comment-id="12379525458601231">Reply</a><span class="item-control blog-admin blog-admin pid-1790816056"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=12379525458601231">Delete</a></span></span></div><div class="comment-replies"><div id="c12379525458601231-rt" class="comment-thread inline-thread"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c12379525458601231-ra" class="thread-chrome thread-expanded"><div><li class="comment" id="c8399856791245209572"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/16753133043157018521" rel="nofollow">Daniel Abadi</a></cite><span class="icon user blog-author"></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1558634951971#c8399856791245209572">May 23, 2019 at 11:09 AM</a></span></div><p class="comment-content">Hi Tim,<br><br>The following papers have some more discussion on the cloggage problem of 2PC: <br>http://vldb.org/pvldb/vldb2010/pvldb_vol3/R06.pdf<br><br>and<br><br>http://www.vldb.org/pvldb/vol7/p821-ren.pdf.<br><br>Please note that primary focus of both of those papers is different than the focus of this blog post (those papers focus on deterministic database systems, while this post proposes a more general framework for removing 2PC). However, the 2PC discussion in both those papers are relevant. The bottom line is that most cloggage comes the failure to overlap the commit protocol with xact execution. By overlapping the commit protocol with execution, as described in this blog post, the time in which conflicting transactions are not allowed to run is significantly reduced. But there is still a potential for transactions to stall under conflicting workloads. The above cited papers show the big difference in available concurrency and transaction throughput when you compare traditional 2PC systems to systems that do not allow arbitrary transaction aborts. </p><span class="comment-actions secondary-text"><span class="item-control blog-admin blog-admin pid-2045359914"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=8399856791245209572">Delete</a></span></span></div><div class="comment-replies"><div id="c8399856791245209572-rt" class="comment-thread inline-thread hidden"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c8399856791245209572-ra" class="thread-chrome thread-expanded"><div></div><div id="c8399856791245209572-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="8399856791245209572">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c8399856791245209572-ce"></div></li></div><div id="c12379525458601231-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="12379525458601231">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c12379525458601231-ce"></div></li><li class="comment" id="c3390484513826171047"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/08161648856347990342" rel="nofollow">Rohan Suri</a></cite><span class="icon user "></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1559389586857#c3390484513826171047">June 1, 2019 at 4:46 AM</a></span></div><p class="comment-content">Hi Daniel,<br>Can this way of transaction modelling be done entirely on the application level?<br><br>I&#39;m trying to understand it with a scenario.<br>For example if I have to insert data into two tables on separate machines:<br>Table1 is User on machine1 (with email as primary key)<br>Table2 is UserMetadata on machine2.<br>My txn is &quot;create an entry for a user in Table1 and then create some metadata in Table2&quot;. It needs ACID guarantees, especially all-or-nothing.<br><br>With your new idea, we would frame the txn like this:<br>First ask machine holding Table2 to write following instruction to stable storage:<br>&quot;poll table1 till it has en entry for email=abc@xyz.com (issue select where statement) and upon getting a result, insert a metadata entry in my table2.&quot;<br><br>Once machine2 has written this to stable storage, we can proceed with entering an entry into Table1 in the usual no-distributed simple ACID txn way.<br><br>So if the first instruction write to machine2 fails, nothing wrong has happened yet.<br>When it succeeds, that&#39;s okie since it&#39;ll be triggered sometime in future ONLY when table1 actually has an entry with the provided email.<br><br><br>Am I understanding it right?<br><br>So it&#39;s like defining rules and their triggering actions?<br><br>Thanks.</p><span class="comment-actions secondary-text"><a class="comment-reply" target="_self" data-comment-id="3390484513826171047">Reply</a><span class="item-control blog-admin blog-admin pid-326086664"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=3390484513826171047">Delete</a></span></span></div><div class="comment-replies"><div id="c3390484513826171047-rt" class="comment-thread inline-thread"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c3390484513826171047-ra" class="thread-chrome thread-expanded"><div><li class="comment" id="c9112550697664320831"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/16753133043157018521" rel="nofollow">Daniel Abadi</a></cite><span class="icon user blog-author"></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1559577100305#c9112550697664320831">June 3, 2019 at 8:51 AM</a></span></div><p class="comment-content">I&#39;m not sure I understand your example since the write to table 1 seems to happen twice in your example --- both before and after the write to table 2.<br><br>But to answer your question at a high level: most things that can be in inside the system can alternatively be done in the application. But it&#39;s usually much easier (and more likely to be correct) if the system takes care of ACID guarantees instead of the application.</p><span class="comment-actions secondary-text"><span class="item-control blog-admin blog-admin pid-2045359914"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=9112550697664320831">Delete</a></span></span></div><div class="comment-replies"><div id="c9112550697664320831-rt" class="comment-thread inline-thread hidden"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c9112550697664320831-ra" class="thread-chrome thread-expanded"><div></div><div id="c9112550697664320831-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="9112550697664320831">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c9112550697664320831-ce"></div></li></div><div id="c3390484513826171047-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="3390484513826171047">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c3390484513826171047-ce"></div></li><li class="comment" id="c2077734613193871829"><div class="avatar-image-container"><img src="//resources.blogblog.com/img/blank.gif" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user">Anonymous</cite><span class="icon user "></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1577127343424#c2077734613193871829">December 23, 2019 at 10:55 AM</a></span></div><p class="comment-content">Isn&#39;t what you&#39;ve described same as having a strong leader, that controls transaction state and replicates state to workers using distributed consensus algorithm like raft? This also removes the need for the 2nd phase and removes ability to cancel transaction on the worker side.</p><span class="comment-actions secondary-text"><a class="comment-reply" target="_self" data-comment-id="2077734613193871829">Reply</a><span class="item-control blog-admin blog-admin pid-290883198"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=2077734613193871829">Delete</a></span></span></div><div class="comment-replies"><div id="c2077734613193871829-rt" class="comment-thread inline-thread"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c2077734613193871829-ra" class="thread-chrome thread-expanded"><div><li class="comment" id="c7144287173023708563"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/16753133043157018521" rel="nofollow">Daniel Abadi</a></cite><span class="icon user blog-author"></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1577297313142#c7144287173023708563">December 25, 2019 at 10:08 AM</a></span></div><p class="comment-content">Consensus algorithms and commit protocols are applied in different scenarios. You see many systems (e.g. Spanner) that use both (they run 2PC over Paxos). 2PC is designed for atomically committing a transaction in which many different nodes were involved in changing their local state from running transaction code. Having only one node controlling all state changes defeats the purpose of distributed transactional processing that 2PC was designed for.</p><span class="comment-actions secondary-text"><span class="item-control blog-admin blog-admin pid-2045359914"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=7144287173023708563">Delete</a></span></span></div><div class="comment-replies"><div id="c7144287173023708563-rt" class="comment-thread inline-thread hidden"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c7144287173023708563-ra" class="thread-chrome thread-expanded"><div></div><div id="c7144287173023708563-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="7144287173023708563">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c7144287173023708563-ce"></div></li></div><div id="c2077734613193871829-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="2077734613193871829">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c2077734613193871829-ce"></div></li><li class="comment" id="c2756439671092357215"><div class="avatar-image-container"><img src="//2.bp.blogspot.com/-cVCYsCbGVuY/YXtRVugCVMI/AAAAAAAAEvo/6N_fu03IldQCteQQuRKzf2M8_kqH0UADgCK4BGAYYCw/s35/closeup_red.JPG" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/14160362864097448339" rel="nofollow">Mohammad Roohitavaf</a></cite><span class="icon user "></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1600022576821#c2756439671092357215">September 13, 2020 at 11:42 AM</a></span></div><p class="comment-content">Hi, <br><br>It is not clear to me how strict serializability is guaranteed for &quot;dependent transactions&quot;. I appreciate it if you help me understand. Suppose we have this scenario:<br><br>We have two transactions T1 and T2. <br>T1 is a dependent transactions, as follows:<br>T1{<br> read (x)<br> if (x == 1) <br>  update y<br> else <br>  update z<br>}<br><br>T2 reads the value of y:<br>T2 {<br> read (y)<br>}<br><br>Now, suppose the client first submits T1 and then T2 in the next round. To guarantee strict serializability, T2 MUST see the effect of T1, as from the client&#8217;s point of view once the client successfully appends its transaction it is committed. Any future transaction that is appended to the log must see the effect of T1. However, that is not guaranteed, because T1 may be restarted and re-tried in the next round causing T2 not to see the effect of T1. <br><br>For example:<br>The value of x in the initial query is 2, thus, T1 decides to update z. But when executing T1 it sees its value has changed to 1, thus it will be retried in the next round with T2. T2 reads the old value of y, and then T1 updates it. <br><br>I was thinking T1 and T2 should be considered concurrent as they are in the same round. However, that is not true, as from the client&#8217;s perspective T1 was submitted in the previous round; T1 has already returned to the client as committed. Thus, to guarantee strict serializability T2 must see the effect of T1. <br></p><span class="comment-actions secondary-text"><a class="comment-reply" target="_self" data-comment-id="2756439671092357215">Reply</a><span class="item-control blog-admin blog-admin pid-607743535"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=2756439671092357215">Delete</a></span></span></div><div class="comment-replies"><div id="c2756439671092357215-rt" class="comment-thread inline-thread"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c2756439671092357215-ra" class="thread-chrome thread-expanded"><div><li class="comment" id="c2715650519052336085"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/16753133043157018521" rel="nofollow">Daniel Abadi</a></cite><span class="icon user blog-author"></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1600115039691#c2715650519052336085">September 14, 2020 at 1:23 PM</a></span></div><p class="comment-content">Strict serializability only guarantees ordering if the second transaction is submitted after the first one *commits*. A commit is defined as a DB commit. Therefore, I don&#39;t understand your statement: &quot;as from the client&#8217;s point of view once the client successfully appends its transaction it is committed&quot;. <br><br>If the DB hasn&#39;t told any client that the txn committed, then it is not committed as far as strict serializability ordering is concerned.</p><span class="comment-actions secondary-text"><span class="item-control blog-admin blog-admin pid-2045359914"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=2715650519052336085">Delete</a></span></span></div><div class="comment-replies"><div id="c2715650519052336085-rt" class="comment-thread inline-thread hidden"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c2715650519052336085-ra" class="thread-chrome thread-expanded"><div></div><div id="c2715650519052336085-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="2715650519052336085">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c2715650519052336085-ce"></div></li><li class="comment" id="c189764959994609092"><div class="avatar-image-container"><img src="//2.bp.blogspot.com/-cVCYsCbGVuY/YXtRVugCVMI/AAAAAAAAEvo/6N_fu03IldQCteQQuRKzf2M8_kqH0UADgCK4BGAYYCw/s35/closeup_red.JPG" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/14160362864097448339" rel="nofollow">Mohammad Roohitavaf</a></cite><span class="icon user "></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1600127365602#c189764959994609092">September 14, 2020 at 4:49 PM</a></span></div><p class="comment-content">Thanks for your response. <br><br>You are right, strict serializability, more specifically the linearizability part of it, concerns about non-concurrent transactions, i.e., T1 and T2 when T2 starts after T1 is committed. In other systems, like Spanner, it is clear to me when a transaction should be considered committed by the client application-- when the transaction request returns to the client. In Calvin, on the other hand, it is not clear to me when a client can consider its transaction committed. I thought once a client successfully appends its transaction to the replicated log, it can consider it committed, as in Calvin there is no abort. All future transactions will be after earlier transactions in the log, so they will see their effect, except dependent transactions that may change their position in the log.<br><br>So, I appreciate if you answer this question then: when a client can consider its transactions committed? Maybe I am missing some part, but does Calvin explicitly inform the client when its transaction committed? If yes, does it wait for all storage nodes involved in the transactions to acknowledge it? </p><span class="comment-actions secondary-text"><span class="item-control blog-admin blog-admin pid-607743535"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=189764959994609092">Delete</a></span></span></div><div class="comment-replies"><div id="c189764959994609092-rt" class="comment-thread inline-thread hidden"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c189764959994609092-ra" class="thread-chrome thread-expanded"><div></div><div id="c189764959994609092-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="189764959994609092">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c189764959994609092-ce"></div></li><li class="comment" id="c8004742670837151456"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/16753133043157018521" rel="nofollow">Daniel Abadi</a></cite><span class="icon user blog-author"></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1600131627663#c8004742670837151456">September 14, 2020 at 6:00 PM</a></span></div><p class="comment-content">A few things:<br><br>(1) In our Calvin implementation, Calvin does not inform client when the transaction has been successfully has been appended to its input log. The client interface is like any other DB --- the client submits transactions and eventually gets back notification that a transaction has been committed. There are no intermediate notifications between txn submission and txn response.<br><br>(2) In some, but not all cases, Calvin responds back to the client with a &#39;commit&#39; message as soon as it is appended to the input log. <br><br>(3) Dependent transactions are an example of a type of transaction that *cannot* be committed at this early stage. Rather, as soon as the first replica checks the reconnaissance values from OLLP and determines they are correct, only then can the client be notified of the commit. This is still earlier than most systems --- this check happens at the beginning of transaction processing, whereas most systems have to wait until the commit protocol to commit. But still, this is not as early as non-dependent transactions which can usually commit as soon as they reach the log.   </p><span class="comment-actions secondary-text"><span class="item-control blog-admin blog-admin pid-2045359914"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=8004742670837151456">Delete</a></span></span></div><div class="comment-replies"><div id="c8004742670837151456-rt" class="comment-thread inline-thread hidden"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c8004742670837151456-ra" class="thread-chrome thread-expanded"><div></div><div id="c8004742670837151456-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="8004742670837151456">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c8004742670837151456-ce"></div></li><li class="comment" id="c6333573073743282009"><div class="avatar-image-container"><img src="//2.bp.blogspot.com/-cVCYsCbGVuY/YXtRVugCVMI/AAAAAAAAEvo/6N_fu03IldQCteQQuRKzf2M8_kqH0UADgCK4BGAYYCw/s35/closeup_red.JPG" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/14160362864097448339" rel="nofollow">Mohammad Roohitavaf</a></cite><span class="icon user "></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1600138914633#c6333573073743282009">September 14, 2020 at 8:01 PM</a></span></div><p class="comment-content">I see. Just to rephrasing what you said (Please correct me if I am wrong)<br><br><br>For non-dependent transactions, once we appended the transactions to the log, we can return to the client and client can consider it committed. <br><br>For dependent transactions, we won&#39;t return to the client util we make sure reconnaissance values are valid and before actually executing the transaction. </p><span class="comment-actions secondary-text"><span class="item-control blog-admin blog-admin pid-607743535"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=6333573073743282009">Delete</a></span></span></div><div class="comment-replies"><div id="c6333573073743282009-rt" class="comment-thread inline-thread hidden"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c6333573073743282009-ra" class="thread-chrome thread-expanded"><div></div><div id="c6333573073743282009-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="6333573073743282009">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c6333573073743282009-ce"></div></li><li class="comment" id="c1024202502997594645"><div class="avatar-image-container"><img src="//www.blogger.com/img/blogger_logo_round_35.png" alt=""/></div><div class="comment-block"><div class="comment-header"><cite class="user"><a href="https://www.blogger.com/profile/16753133043157018521" rel="nofollow">Daniel Abadi</a></cite><span class="icon user blog-author"></span><span class="datetime secondary-text"><a rel="nofollow" href="http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html?showComment=1600142288880#c1024202502997594645">September 14, 2020 at 8:58 PM</a></span></div><p class="comment-content">There are some other classes of transactions besides dependent transactions that also cannot commit immediately when they hit the log (that are beyond the scope of this discussion), but aside from that, your summary is accurate.<br><br>For dependent transactions, the commit is returned after reconnaissance values are confirmed accurate (in the middle of transaction execution). </p><span class="comment-actions secondary-text"><span class="item-control blog-admin blog-admin pid-2045359914"><a target="_self" href="https://www.blogger.com/delete-comment.g?blogID=8899645800948009496&amp;postID=1024202502997594645">Delete</a></span></span></div><div class="comment-replies"><div id="c1024202502997594645-rt" class="comment-thread inline-thread hidden"><span class="thread-toggle thread-expanded"><span class="thread-arrow"></span><span class="thread-count"><a target="_self">Replies</a></span></span><ol id="c1024202502997594645-ra" class="thread-chrome thread-expanded"><div></div><div id="c1024202502997594645-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="1024202502997594645">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c1024202502997594645-ce"></div></li></div><div id="c2756439671092357215-continue" class="continue"><a class="comment-reply" target="_self" data-comment-id="2756439671092357215">Reply</a></div></ol></div></div><div class="comment-replybox-single" id="c2756439671092357215-ce"></div></li></ol><div id="top-continue" class="continue"><a class="comment-reply" target="_self">Add comment</a></div><div class="comment-replybox-thread" id="top-ce"></div><div class="loadmore hidden" data-post-id="6159068451380532642"><a target="_self">Load more...</a></div></div>
+</div>
+</div>
+<p class='comment-footer'>
+<div class='comment-form'>
+<a name='comment-form'></a>
+<p>
+</p>
+<a href='https://www.blogger.com/comment-iframe.g?blogID=8899645800948009496&postID=6159068451380532642' id='comment-editor-src'></a>
+<iframe allowtransparency='true' class='blogger-iframe-colorize blogger-comment-from-post' frameborder='0' height='410px' id='comment-editor' name='comment-editor' src='' width='100%'></iframe>
+<script src='https://www.blogger.com/static/v1/jsbin/1238356517-comment_from_post_iframe.js' type='text/javascript'></script>
+<script type='text/javascript'>
+      BLOG_CMT_createIframe('https://www.blogger.com/rpc_relay.html');
+    </script>
+</div>
+</p>
+<div id='backlinks-container'>
+<div id='Blog1_backlinks-container'>
+</div>
+</div>
+</div>
+</div>
+
+        </div></div>
+      
+</div>
+<div class='blog-pager' id='blog-pager'>
+<span id='blog-pager-newer-link'>
+<a class='blog-pager-newer-link' href='http://dbmsmusings.blogspot.com/2019/05/introduction-to-transaction-isolation.html' id='Blog1_blog-pager-newer-link' title='Newer Post'>Newer Post</a>
+</span>
+<span id='blog-pager-older-link'>
+<a class='blog-pager-older-link' href='http://dbmsmusings.blogspot.com/2018/12/partitioned-consensus-and-its-impact-on.html' id='Blog1_blog-pager-older-link' title='Older Post'>Older Post</a>
+</span>
+<a class='home-link' href='http://dbmsmusings.blogspot.com/'>Home</a>
+</div>
+<div class='clear'></div>
+<div class='post-feeds'>
+<div class='feed-links'>
+Subscribe to:
+<a class='feed-link' href='http://dbmsmusings.blogspot.com/feeds/6159068451380532642/comments/default' target='_blank' type='application/atom+xml'>Post Comments (Atom)</a>
+</div>
+</div>
+</div></div>
+</div>
+</div>
+<div class='column-left-outer'>
+<div class='column-left-inner'>
+<aside>
+</aside>
+</div>
+</div>
+<div class='column-right-outer'>
+<div class='column-right-inner'>
+<aside>
+<div class='sidebar section' id='sidebar-right-1'><div class='widget Image' data-version='1' id='Image1'>
+<h2>Daniel Abadi</h2>
+<div class='widget-content'>
+<img alt='Daniel Abadi' height='449' id='Image1_img' src='http://2.bp.blogspot.com/-jKrDqTlGWUk/YHcRe3etAoI/AAAAAAAAIEY/QbZCnoCcnV0q6ucLA1R4cqbc7AsRsQKOgCK4BGAYYCw/s1600/dan_2019.jpg' width='315'/>
+<br/>
+</div>
+<div class='clear'></div>
+</div><div class='widget Profile' data-version='1' id='Profile1'>
+<h2>About Me</h2>
+<div class='widget-content'>
+<dl class='profile-datablock'>
+<dt class='profile-data'>
+<a class='profile-name-link g-profile' href='https://www.blogger.com/profile/16753133043157018521' rel='author' style='background-image: url(//www.blogger.com/img/logo-16.png);'>
+Daniel Abadi
+</a>
+</dt>
+<dd class='profile-textblock'>Daniel Abadi is the Darnell-Kanal Professor of Computer Science at University of Maryland, College Park.  He is best-known for the development of the storage and query execution engines of the C-Store (column-oriented database) prototype, which was commercialized by Vertica and eventually acquired by Hewlett-Packard in 2011, for his HadoopDB research on fault tolerant scalable analytical database systems which was commercialized by Hadapt and acquired by Teradata in 2014, and deterministic, scalable, transactional, distributed systems such as Calvin which is currently being commercialized by <a href="https://fauna.com/">Fauna</a>. Abadi has been a recipient of a
+Churchill Scholarship, a NSF CAREER Award, a Sloan Research Fellowship, a VLDB Best Paper Award, two VLDB <b>10 year</b> Best Paper Awards, the 2008 SIGMOD Jim Gray Doctoral Dissertation Award, the 2013-2014 Yale Provost's Teaching Prize, and the 2013 VLDB Early Career Researcher Award. He received his PhD in 2008 from MIT.
+He blogs at <a href="http://dbmsmusings.blogspot.com">DBMS Musings</a> and tweets at <a href="http://www.twitter.com/daniel_abadi">@daniel_abadi</a>.</dd>
+</dl>
+<a class='profile-link' href='https://www.blogger.com/profile/16753133043157018521' rel='author'>View my complete profile</a>
+<div class='clear'></div>
+</div>
+</div></div>
+<table border='0' cellpadding='0' cellspacing='0' class='section-columns columns-2'>
+<tbody>
+<tr>
+<td class='first columns-cell'>
+<div class='sidebar section' id='sidebar-right-2-1'><div class='widget BlogArchive' data-version='1' id='BlogArchive1'>
+<h2>Blog Archive</h2>
+<div class='widget-content'>
+<div id='ArchiveList'>
+<div id='BlogArchive1_ArchiveList'>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2021/'>
+2021
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2021/03/'>
+March
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate expanded'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy toggle-open'>
+
+        &#9660;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2019/'>
+2019
+</a>
+<span class='post-count' dir='ltr'>(8)</span>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2019/12/'>
+December
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2019/10/'>
+October
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2019/08/'>
+August
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2019/07/'>
+July
+</a>
+<span class='post-count' dir='ltr'>(2)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2019/06/'>
+June
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2019/05/'>
+May
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate expanded'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy toggle-open'>
+
+        &#9660;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2019/01/'>
+January
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+<ul class='posts'>
+<li><a href='http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html'>It&#8217;s Time to Move on from Two Phase Commit</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2018/'>
+2018
+</a>
+<span class='post-count' dir='ltr'>(3)</span>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2018/12/'>
+December
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2018/09/'>
+September
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2018/03/'>
+March
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2017/'>
+2017
+</a>
+<span class='post-count' dir='ltr'>(3)</span>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2017/10/'>
+October
+</a>
+<span class='post-count' dir='ltr'>(2)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2017/04/'>
+April
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2015/'>
+2015
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2015/10/'>
+October
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2012/'>
+2012
+</a>
+<span class='post-count' dir='ltr'>(4)</span>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2012/11/'>
+November
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2012/10/'>
+October
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2012/06/'>
+June
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2012/05/'>
+May
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2011/'>
+2011
+</a>
+<span class='post-count' dir='ltr'>(6)</span>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2011/12/'>
+December
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2011/10/'>
+October
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2011/07/'>
+July
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2011/05/'>
+May
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2011/03/'>
+March
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2011/02/'>
+February
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2010/'>
+2010
+</a>
+<span class='post-count' dir='ltr'>(8)</span>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2010/12/'>
+December
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2010/08/'>
+August
+</a>
+<span class='post-count' dir='ltr'>(2)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2010/07/'>
+July
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2010/04/'>
+April
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2010/03/'>
+March
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2010/01/'>
+January
+</a>
+<span class='post-count' dir='ltr'>(2)</span>
+</li>
+</ul>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2009/'>
+2009
+</a>
+<span class='post-count' dir='ltr'>(21)</span>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2009/12/'>
+December
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2009/11/'>
+November
+</a>
+<span class='post-count' dir='ltr'>(1)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2009/10/'>
+October
+</a>
+<span class='post-count' dir='ltr'>(2)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2009/09/'>
+September
+</a>
+<span class='post-count' dir='ltr'>(2)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2009/08/'>
+August
+</a>
+<span class='post-count' dir='ltr'>(2)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2009/07/'>
+July
+</a>
+<span class='post-count' dir='ltr'>(5)</span>
+</li>
+</ul>
+<ul class='hierarchy'>
+<li class='archivedate collapsed'>
+<a class='toggle' href='javascript:void(0)'>
+<span class='zippy'>
+
+        &#9658;&#160;
+      
+</span>
+</a>
+<a class='post-count-link' href='http://dbmsmusings.blogspot.com/2009/06/'>
+June
+</a>
+<span class='post-count' dir='ltr'>(8)</span>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class='clear'></div>
+</div>
+</div></div>
+</td>
+<td class='columns-cell'>
+<div class='sidebar section' id='sidebar-right-2-2'><div class='widget Followers' data-version='1' id='Followers1'>
+<h2 class='title'>Followers</h2>
+<div class='widget-content'>
+<div id='Followers1-wrapper'>
+<div style='margin-right:2px;'>
+<div><script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
+<div id="followers-iframe-container"></div>
+<script type="text/javascript">
+    window.followersIframe = null;
+    function followersIframeOpen(url) {
+      gapi.load("gapi.iframes", function() {
+        if (gapi.iframes && gapi.iframes.getContext) {
+          window.followersIframe = gapi.iframes.getContext().openChild({
+            url: url,
+            where: document.getElementById("followers-iframe-container"),
+            messageHandlersFilter: gapi.iframes.CROSS_ORIGIN_IFRAMES_FILTER,
+            messageHandlers: {
+              '_ready': function(obj) {
+                window.followersIframe.getIframeEl().height = obj.height;
+              },
+              'reset': function() {
+                window.followersIframe.close();
+                followersIframeOpen("https://www.blogger.com/followers.g?blogID\x3d8899645800948009496\x26colors\x3dCgt0cmFuc3BhcmVudBILdHJhbnNwYXJlbnQaByM2NjY2NjYiByMyMTk4YTYqByNmZmZmZmYyByM2NjY2NjY6ByM2NjY2NjZCByMyMTk4YTZKByNjY2NjY2NSByMyMTk4YTZaC3RyYW5zcGFyZW50\x26pageSize\x3d21\x26postID\x3d6159068451380532642\x26origin\x3dhttp://dbmsmusings.blogspot.com/");
+              },
+              'open': function(url) {
+                window.followersIframe.close();
+                followersIframeOpen(url);
+              },
+              'blogger-ping': function() {
+              }
+            }
+          });
+        }
+      });
+    }
+    followersIframeOpen("https://www.blogger.com/followers.g?blogID\x3d8899645800948009496\x26colors\x3dCgt0cmFuc3BhcmVudBILdHJhbnNwYXJlbnQaByM2NjY2NjYiByMyMTk4YTYqByNmZmZmZmYyByM2NjY2NjY6ByM2NjY2NjZCByMyMTk4YTZKByNjY2NjY2NSByMyMTk4YTZaC3RyYW5zcGFyZW50\x26pageSize\x3d21\x26postID\x3d6159068451380532642\x26origin\x3dhttp://dbmsmusings.blogspot.com/");
+  </script></div>
+</div>
+</div>
+<div class='clear'></div>
+</div>
+</div></div>
+</td>
+</tr>
+</tbody>
+</table>
+<div class='sidebar no-items section' id='sidebar-right-3'></div>
+</aside>
+</div>
+</div>
+</div>
+<div style='clear: both'></div>
+<!-- columns -->
+</div>
+<!-- main -->
+</div>
+</div>
+<div class='main-cap-bottom cap-bottom'>
+<div class='cap-left'></div>
+<div class='cap-right'></div>
+</div>
+</div>
+<footer>
+<div class='footer-outer'>
+<div class='footer-cap-top cap-top'>
+<div class='cap-left'></div>
+<div class='cap-right'></div>
+</div>
+<div class='fauxborder-left footer-fauxborder-left'>
+<div class='fauxborder-right footer-fauxborder-right'></div>
+<div class='region-inner footer-inner'>
+<div class='foot no-items section' id='footer-1'></div>
+<table border='0' cellpadding='0' cellspacing='0' class='section-columns columns-2'>
+<tbody>
+<tr>
+<td class='first columns-cell'>
+<div class='foot no-items section' id='footer-2-1'></div>
+</td>
+<td class='columns-cell'>
+<div class='foot no-items section' id='footer-2-2'></div>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- outside of the include in order to lock Attribution widget -->
+<div class='foot section' id='footer-3' name='Footer'><div class='widget Attribution' data-version='1' id='Attribution1'>
+<div class='widget-content' style='text-align: center;'>
+Ethereal theme. Powered by <a href='https://www.blogger.com' target='_blank'>Blogger</a>.
+</div>
+<div class='clear'></div>
+</div></div>
+</div>
+</div>
+<div class='footer-cap-bottom cap-bottom'>
+<div class='cap-left'></div>
+<div class='cap-right'></div>
+</div>
+</div>
+</footer>
+<!-- content -->
+</div>
+</div>
+<div class='content-cap-bottom cap-bottom'>
+<div class='cap-left'></div>
+<div class='cap-right'></div>
+</div>
+</div>
+</div>
+<script type='text/javascript'>
+    window.setTimeout(function() {
+        document.body.className = document.body.className.replace('loading', '');
+      }, 10);
+  </script>
+<script src='https://apis.google.com/js/plusone.js' type='text/javascript'></script>
+
+<script type="text/javascript" src="https://www.blogger.com/static/v1/widgets/2465480620-widgets.js"></script>
+<script type='text/javascript'>
+window['__wavt'] = 'AOuZoY7WHNPluHcC5XIo2DLkQyY8aMpktw:1648623755117';_WidgetManager._Init('//www.blogger.com/rearrange?blogID\x3d8899645800948009496','//dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html','8899645800948009496');
+_WidgetManager._SetDataContext([{'name': 'blog', 'data': {'blogId': '8899645800948009496', 'title': 'DBMS Musings', 'url': 'http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html', 'canonicalUrl': 'http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html', 'homepageUrl': 'http://dbmsmusings.blogspot.com/', 'searchUrl': 'http://dbmsmusings.blogspot.com/search', 'canonicalHomepageUrl': 'http://dbmsmusings.blogspot.com/', 'blogspotFaviconUrl': 'http://dbmsmusings.blogspot.com/favicon.ico', 'bloggerUrl': 'https://www.blogger.com', 'hasCustomDomain': false, 'httpsEnabled': true, 'enabledCommentProfileImages': true, 'gPlusViewType': 'FILTERED_POSTMOD', 'adultContent': false, 'analyticsAccountNumber': '', 'encoding': 'UTF-8', 'locale': 'en', 'localeUnderscoreDelimited': 'en', 'languageDirection': 'ltr', 'isPrivate': false, 'isMobile': false, 'isMobileRequest': false, 'mobileClass': '', 'isPrivateBlog': false, 'isDynamicViewsAvailable': true, 'feedLinks': '\x3clink rel\x3d\x22alternate\x22 type\x3d\x22application/atom+xml\x22 title\x3d\x22DBMS Musings - Atom\x22 href\x3d\x22http://dbmsmusings.blogspot.com/feeds/posts/default\x22 /\x3e\n\x3clink rel\x3d\x22alternate\x22 type\x3d\x22application/rss+xml\x22 title\x3d\x22DBMS Musings - RSS\x22 href\x3d\x22http://dbmsmusings.blogspot.com/feeds/posts/default?alt\x3drss\x22 /\x3e\n\x3clink rel\x3d\x22service.post\x22 type\x3d\x22application/atom+xml\x22 title\x3d\x22DBMS Musings - Atom\x22 href\x3d\x22https://www.blogger.com/feeds/8899645800948009496/posts/default\x22 /\x3e\n\n\x3clink rel\x3d\x22alternate\x22 type\x3d\x22application/atom+xml\x22 title\x3d\x22DBMS Musings - Atom\x22 href\x3d\x22http://dbmsmusings.blogspot.com/feeds/6159068451380532642/comments/default\x22 /\x3e\n', 'meTag': '', 'adsenseHostId': 'ca-host-pub-1556223355139109', 'adsenseHasAds': false, 'adsenseAutoAds': false, 'ieCssRetrofitLinks': '\x3c!--[if IE]\x3e\x3cscript type\x3d\x22text/javascript\x22 src\x3d\x22https://www.blogger.com/static/v1/jsbin/2287435483-ieretrofit.js\x22\x3e\x3c/script\x3e\n\x3c![endif]--\x3e', 'boqCommentIframeForm': false, 'view': '', 'dynamicViewsCommentsSrc': '//www.blogblog.com/dynamicviews/4224c15c4e7c9321/js/comments.js', 'dynamicViewsScriptSrc': '//www.blogblog.com/dynamicviews/e76848f994149c81', 'plusOneApiSrc': 'https://apis.google.com/js/plusone.js', 'disableGComments': true, 'sharing': {'platforms': [{'name': 'Get link', 'key': 'link', 'shareMessage': 'Get link', 'target': ''}, {'name': 'Facebook', 'key': 'facebook', 'shareMessage': 'Share to Facebook', 'target': 'facebook'}, {'name': 'BlogThis!', 'key': 'blogThis', 'shareMessage': 'BlogThis!', 'target': 'blog'}, {'name': 'Twitter', 'key': 'twitter', 'shareMessage': 'Share to Twitter', 'target': 'twitter'}, {'name': 'Pinterest', 'key': 'pinterest', 'shareMessage': 'Share to Pinterest', 'target': 'pinterest'}, {'name': 'Email', 'key': 'email', 'shareMessage': 'Email', 'target': 'email'}], 'disableGooglePlus': true, 'googlePlusShareButtonWidth': 0, 'googlePlusBootstrap': '\x3cscript type\x3d\x22text/javascript\x22\x3ewindow.___gcfg \x3d {\x27lang\x27: \x27en\x27};\x3c/script\x3e'}, 'hasCustomJumpLinkMessage': false, 'jumpLinkMessage': 'Read more', 'pageType': 'item', 'postId': '6159068451380532642', 'postImageThumbnailUrl': 'https://lh6.googleusercontent.com/F7giuNAtrYsZz1ZYZPOuqXnnYYfUTiXq-IU-wKkiRbnKqhnEehTA1cIwdDTIQ5MylDjbsKhbjYLyZJkt-HFQQ50BaMtS2Vel_vr0II5vbjl2K6UX3tjQTnOb75ICgeo7IQDmIyeG\x3ds72-c', 'postImageUrl': 'https://lh6.googleusercontent.com/F7giuNAtrYsZz1ZYZPOuqXnnYYfUTiXq-IU-wKkiRbnKqhnEehTA1cIwdDTIQ5MylDjbsKhbjYLyZJkt-HFQQ50BaMtS2Vel_vr0II5vbjl2K6UX3tjQTnOb75ICgeo7IQDmIyeG', 'pageName': 'It\u2019s Time to Move on from Two Phase Commit', 'pageTitle': 'DBMS Musings: It\u2019s Time to Move on from Two Phase Commit'}}, {'name': 'features', 'data': {'sharing_get_link_dialog': 'true', 'sharing_native': 'false'}}, {'name': 'messages', 'data': {'edit': 'Edit', 'linkCopiedToClipboard': 'Link copied to clipboard!', 'ok': 'Ok', 'postLink': 'Post Link'}}, {'name': 'template', 'data': {'name': 'Ethereal', 'localizedName': 'Ethereal', 'isResponsive': false, 'isAlternateRendering': false, 'isCustom': false, 'variant': 'hummingBirds2', 'variantId': 'hummingBirds2'}}, {'name': 'view', 'data': {'classic': {'name': 'classic', 'url': '?view\x3dclassic'}, 'flipcard': {'name': 'flipcard', 'url': '?view\x3dflipcard'}, 'magazine': {'name': 'magazine', 'url': '?view\x3dmagazine'}, 'mosaic': {'name': 'mosaic', 'url': '?view\x3dmosaic'}, 'sidebar': {'name': 'sidebar', 'url': '?view\x3dsidebar'}, 'snapshot': {'name': 'snapshot', 'url': '?view\x3dsnapshot'}, 'timeslide': {'name': 'timeslide', 'url': '?view\x3dtimeslide'}, 'isMobile': false, 'title': 'It\u2019s Time to Move on from Two Phase Commit', 'description': ' The two-phase commit protocol (2PC) has been used in enterprise software systems for over three decades . It has been an an incredibly impa...', 'featuredImage': 'https://lh6.googleusercontent.com/F7giuNAtrYsZz1ZYZPOuqXnnYYfUTiXq-IU-wKkiRbnKqhnEehTA1cIwdDTIQ5MylDjbsKhbjYLyZJkt-HFQQ50BaMtS2Vel_vr0II5vbjl2K6UX3tjQTnOb75ICgeo7IQDmIyeG', 'url': 'http://dbmsmusings.blogspot.com/2019/01/its-time-to-move-on-from-two-phase.html', 'type': 'item', 'isSingleItem': true, 'isMultipleItems': false, 'isError': false, 'isPage': false, 'isPost': true, 'isHomepage': false, 'isArchive': false, 'isLabelSearch': false, 'postId': 6159068451380532642}}]);
+_WidgetManager._RegisterWidget('_NavbarView', new _WidgetInfo('Navbar1', 'navbar', document.getElementById('Navbar1'), {}, 'displayModeFull'));
+_WidgetManager._RegisterWidget('_HeaderView', new _WidgetInfo('Header1', 'header', document.getElementById('Header1'), {}, 'displayModeFull'));
+_WidgetManager._RegisterWidget('_BlogView', new _WidgetInfo('Blog1', 'main', document.getElementById('Blog1'), {'cmtInteractionsEnabled': false, 'lightboxEnabled': true, 'lightboxModuleUrl': 'https://www.blogger.com/static/v1/jsbin/2325467295-lbx.js', 'lightboxCssUrl': 'https://www.blogger.com/static/v1/v-css/3523451998-lightbox_bundle.css'}, 'displayModeFull'));
+_WidgetManager._RegisterWidget('_ImageView', new _WidgetInfo('Image1', 'sidebar-right-1', document.getElementById('Image1'), {'resize': true}, 'displayModeFull'));
+_WidgetManager._RegisterWidget('_ProfileView', new _WidgetInfo('Profile1', 'sidebar-right-1', document.getElementById('Profile1'), {}, 'displayModeFull'));
+_WidgetManager._RegisterWidget('_BlogArchiveView', new _WidgetInfo('BlogArchive1', 'sidebar-right-2-1', document.getElementById('BlogArchive1'), {'languageDirection': 'ltr', 'loadingMessage': 'Loading\x26hellip;'}, 'displayModeFull'));
+_WidgetManager._RegisterWidget('_FollowersView', new _WidgetInfo('Followers1', 'sidebar-right-2-2', document.getElementById('Followers1'), {}, 'displayModeFull'));
+_WidgetManager._RegisterWidget('_AttributionView', new _WidgetInfo('Attribution1', 'footer-3', document.getElementById('Attribution1'), {}, 'displayModeFull'));
+</script>
+</body>
+</html>
